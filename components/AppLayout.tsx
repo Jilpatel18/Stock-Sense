@@ -624,56 +624,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </nav>
             </div>
           </div>
-
-          {/* Sidebar Footer User Card */}
-          <div className="p-3.5 border-t border-zinc-200 bg-white">
-            {user ? (
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-3 p-2 rounded-xl bg-zinc-50 border border-zinc-200/80">
-                  <div className="w-8 h-8 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shrink-0">
-                    {getInitials(user.name, user.email)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-xs text-zinc-950 truncate leading-tight">
-                      {user.name || user.email}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 font-mono font-medium truncate">
-                      {formatRole(user.role)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1.5 text-xs">
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 font-bold rounded-lg bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white transition-colors border border-zinc-200/70"
-                    title="Edit Profile"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Profile</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 font-bold rounded-lg bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white transition-colors border border-zinc-200/70"
-                    title="Logout"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors"
-              >
-                <User className="w-4 h-4" />
-                <span>Log In</span>
-              </Link>
-            )}
-          </div>
         </aside>
 
         {/* Main Content Area */}
