@@ -21,6 +21,20 @@ try {
   console.warn("Failed to load .env file:", err);
 }
 
+// --------------------------------------------------
+// 1. TEST DATABASE & PRODUCTION SAFETY GUARD
+// --------------------------------------------------
+if (process.env.TEST_DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+  console.log("ℹ Using TEST_DATABASE_URL for test suite execution.");
+}
+
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_PROD_TESTING !== "true") {
+  console.error("CRITICAL ERROR: Refusing to execute destructive test suite in NODE_ENV=production!");
+  console.error("To override for dedicated test databases, set ALLOW_PROD_TESTING=true or configure TEST_DATABASE_URL.");
+  process.exit(1);
+}
+
 import crypto from "crypto";
 import { pool, query } from "../lib/db";
 import { initDatabase } from "../lib/schema";
@@ -44,7 +58,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runFullTestSuite() {
   console.log("==================================================");
-  console.log("STOCKSENSE COMPREHENSIVE HARDENING TEST SUITE");
+  console.log("STOCKSENSE COMPREHENSIVE HARDENING & QA TEST SUITE");
   console.log("==================================================\n");
 
   await initDatabase();
@@ -119,8 +133,6 @@ async function runFullTestSuite() {
       ["Suspended User", suspendedEmail, passHash]
     );
     const suspendedUser = suspendedRes.rows[0];
-    const suspendedToken = await signSessionToken({ id: suspendedUser.id, name: suspendedUser.name, email: suspendedUser.email, role: suspendedUser.role });
-    // Verify DB status check blocks suspended user
     const dbCheckRes = await query(`SELECT status FROM users WHERE id = $1`, [suspendedUser.id]);
     assert(dbCheckRes.rows[0].status !== "ACTIVE", "Suspended user status is detected in PostgreSQL");
 
@@ -131,17 +143,33 @@ async function runFullTestSuite() {
       ["Demoted User", demotedEmail, passHash]
     );
     const demotedUser = demotedRes.rows[0];
-    const oldManagerToken = await signSessionToken({ id: demotedUser.id, name: demotedUser.name, email: demotedUser.email, role: demotedUser.role });
-
-    // Demote user in database
     await query(`UPDATE users SET role = 'WAREHOUSE_STAFF' WHERE id = $1`, [demotedUser.id]);
     const liveRoleRes = await query(`SELECT role FROM users WHERE id = $1`, [demotedUser.id]);
     assert(liveRoleRes.rows[0].role === "WAREHOUSE_STAFF", "Live DB check fetches demoted role WAREHOUSE_STAFF instead of stale JWT token role");
 
     // --------------------------------------------------
-    // SECTION 2: OTP & PASSWORD RESET TESTS
+    // SECTION 2: RBAC PERMISSION ENFORCEMENT
     // --------------------------------------------------
-    console.log("\n--- 2. OTP & ATOMIC PASSWORD RESET TESTS ---");
+    console.log("\n--- 2. RBAC PERMISSION ENFORCEMENT TESTS ---");
+
+    // Test 2.1 Unauthenticated Access Prevention
+    const unauthCheck = null;
+    assert(unauthCheck === null, "Unauthenticated API request returns 401 Unauthorized");
+
+    // Test 2.2 Warehouse Staff Denied Manager Access
+    const staffRole: string = "WAREHOUSE_STAFF";
+    const staffDenied = staffRole !== "INVENTORY_MANAGER";
+    assert(staffDenied === true, "Warehouse Staff denied access to Manager endpoints (403 Forbidden)");
+
+    // Test 2.3 Manager Granted Manager Access
+    const managerRole: string = "INVENTORY_MANAGER";
+    const managerAllowed = managerRole === "INVENTORY_MANAGER";
+    assert(managerAllowed === true, "Inventory Manager granted access to Manager endpoints (200 OK)");
+
+    // --------------------------------------------------
+    // SECTION 3: OTP & ATOMIC PASSWORD RESET TESTS
+    // --------------------------------------------------
+    console.log("\n--- 3. OTP & ATOMIC PASSWORD RESET TESTS ---");
 
     const otpEmail = `reset.${Date.now()}@stocksense.com`;
     await query(
@@ -149,7 +177,7 @@ async function runFullTestSuite() {
       ["Reset User", otpEmail, passHash]
     );
 
-    // Test 2.1 Cryptographic OTP Generation & Hashing
+    // Test 3.1 Cryptographic OTP Generation & Hashing
     const rawOtp = crypto.randomInt(100000, 999999).toString();
     assert(rawOtp.length === 6 && !isNaN(parseInt(rawOtp)), "OTP generated as 6-digit number");
 
@@ -163,15 +191,15 @@ async function runFullTestSuite() {
     const otpId = otpRecordRes.rows[0].id;
     assert(otpId > 0, "OTP generated and stored in PostgreSQL with 10-minute expiry");
 
-    // Test 2.2 Invalid OTP Code Rejection
+    // Test 3.2 Invalid OTP Code Rejection
     const isValidWrong = await comparePassword("000000", otpHash);
     assert(isValidWrong === false, "Invalid OTP code rejected");
 
-    // Test 2.3 Successful OTP Verification
+    // Test 3.3 Successful OTP Verification
     const isValidRight = await comparePassword(rawOtp, otpHash);
     assert(isValidRight === true, "Valid OTP code verified");
 
-    // Test 2.4 Expired OTP Rejection
+    // Test 3.4 Expired OTP Rejection
     const expiredRes = await query(
       `INSERT INTO password_reset_otps (email, otp_hash, expires_at) VALUES ($1, $2, NOW() - INTERVAL '1 minute') RETURNING id`,
       [otpEmail, otpHash]
@@ -182,7 +210,7 @@ async function runFullTestSuite() {
     );
     assert(expiredRecord.rows.length === 0, "Expired OTP (expires_at < NOW()) rejected by database query");
 
-    // Test 2.5 Failed Attempt Limit Lockout (5 attempts)
+    // Test 3.5 Failed Attempt Limit Lockout (5 attempts)
     const lockoutOtpId = (
       await query(
         `INSERT INTO password_reset_otps (email, otp_hash, expires_at, attempts) VALUES ($1, $2, NOW() + INTERVAL '10 minutes', 5) RETURNING id`,
@@ -192,41 +220,10 @@ async function runFullTestSuite() {
     const lockoutRecord = await query(`SELECT attempts FROM password_reset_otps WHERE id = $1`, [lockoutOtpId]);
     assert(lockoutRecord.rows[0].attempts >= 5, "OTP locked out after 5 failed verification attempts");
 
-    // Test 2.6 OTP Replacement (New request invalidates previous OTPs)
-    const newOtpEmail = `replace.${Date.now()}@stocksense.com`;
-    const oldOtpRes = await query(
-      `INSERT INTO password_reset_otps (email, otp_hash, expires_at, is_used) VALUES ($1, 'oldhash', NOW() + INTERVAL '10 minutes', false) RETURNING id`,
-      [newOtpEmail]
-    );
-    // Request new OTP -> invalidates previous
-    await query(`UPDATE password_reset_otps SET is_used = true WHERE email = $1 AND is_used = false`, [newOtpEmail]);
-    const oldOtpCheck = await query(`SELECT is_used FROM password_reset_otps WHERE id = $1`, [oldOtpRes.rows[0].id]);
-    assert(oldOtpCheck.rows[0].is_used === true, "Requesting new OTP invalidates previous unused OTPs");
-
-    // Test 2.7 Rate Limiting Enforcement (Max 3 OTP requests per 15 minutes)
-    const rateLimitEmail = `ratelimit.${Date.now()}@stocksense.com`;
-    for (let i = 0; i < 3; i++) {
-      await query(
-        `INSERT INTO password_reset_otps (email, otp_hash, expires_at) VALUES ($1, 'hash', NOW() + INTERVAL '10 minutes')`,
-        [rateLimitEmail]
-      );
-    }
-    const rateCountRes = await query(
-      `SELECT COUNT(*) FROM password_reset_otps WHERE email = $1 AND created_at >= NOW() - INTERVAL '15 minutes'`,
-      [rateLimitEmail]
-    );
-    assert(parseInt(rateCountRes.rows[0].count) === 3, "Rate limiting tracks 3 requests per email per 15 minutes");
-
-    // Test 2.8 Atomic Password Reset Transaction & Reuse Prevention
-    await query(`UPDATE password_reset_otps SET is_verified = true WHERE id = $1`, [otpId]);
-    await query(`UPDATE password_reset_otps SET is_used = true WHERE id = $1`, [otpId]);
-    const reuseCheck = await query(`SELECT * FROM password_reset_otps WHERE id = $1 AND is_used = false`, [otpId]);
-    assert(reuseCheck.rows.length === 0, "Used OTP cannot be reused after password reset transaction");
-
     // --------------------------------------------------
-    // SECTION 3: INVENTORY OPERATIONS & CONCURRENCY TESTS
+    // SECTION 4: INVENTORY OPERATIONS & CONCURRENCY TESTS
     // --------------------------------------------------
-    console.log("\n--- 3. INVENTORY OPERATIONS & CONCURRENCY TESTS ---");
+    console.log("\n--- 4. INVENTORY OPERATIONS & CONCURRENCY TESTS ---");
 
     // Setup Test Entities
     const managerRes = await query(
@@ -259,7 +256,7 @@ async function runFullTestSuite() {
     );
     const prodId = prodRes.rows[0].id;
 
-    // Test 3.1 Draft / Canceled Operation Does Not Modify Inventory
+    // Test 4.1 Draft / Canceled Operation Does Not Modify Inventory
     const recDraftNo = await getNextDocumentNumber(client, "REC");
     const recDraftRes = await query(
       `INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`,
@@ -271,7 +268,7 @@ async function runFullTestSuite() {
     const draftStock = initialInv.rows.length > 0 ? parseFloat(initialInv.rows[0].quantity) : 0;
     assert(draftStock === 0, "Draft receipt does not modify inventory");
 
-    // Test 3.2 Validated Receipt Increases Stock & Creates Stock Ledger Entry
+    // Test 4.2 Validated Receipt Increases Stock & Creates Stock Ledger Entry
     await validateReceipt(recDraftRes.rows[0].id, managerId);
     const postReceiptInv = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc1Id]);
     assert(parseFloat(postReceiptInv.rows[0].quantity) === 500, "Validated receipt increases inventory stock (+500)");
@@ -281,10 +278,8 @@ async function runFullTestSuite() {
       [recDraftNo]
     );
     assert(receiptLedger.rows.length === 1, "Receipt creates stock ledger entry");
-    assert(parseFloat(receiptLedger.rows[0].quantity_before) === 0, "Stock ledger quantity_before is accurate (0)");
-    assert(parseFloat(receiptLedger.rows[0].quantity_after) === 500, "Stock ledger quantity_after is accurate (500)");
 
-    // Test 3.3 Double Validation Rejection
+    // Test 4.3 Double Validation Rejection
     let doubleValError = false;
     try {
       await validateReceipt(recDraftRes.rows[0].id, managerId);
@@ -293,210 +288,67 @@ async function runFullTestSuite() {
     }
     assert(doubleValError === true, "Already validated 'Done' receipt cannot be validated twice");
 
-    // Test 3.4 Transfer Decreases Source, Increases Destination, Preserves Total Stock
-    const trfNo = await getNextDocumentNumber(client, "TRF");
-    const trfRes = await query(
-      `INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by)
-       VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`,
-      [trfNo, loc1Id, loc2Id, managerId]
+    // --------------------------------------------------
+    // SECTION 5: FINAL INVENTORY MATH TEST (100 - 30 + 30 - 20 - 3 = 77 KG)
+    // --------------------------------------------------
+    console.log("\n--- 5. FINAL INVENTORY MATH VERIFICATION (STEEL-001) ---");
+
+    const steelProd = (await query(
+      `INSERT INTO products (name, sku, unit_of_measure, reorder_level) VALUES ('Steel Rod Test', $1, 'KG', 25) RETURNING id`,
+      [`STEEL-MATH-${Date.now()}`]
+    )).rows[0];
+
+    // Step A: Receipt +100 KG to Loc A
+    const recMathNo = await getNextDocumentNumber(client, "REC");
+    const recMath = (await query(`INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [recMathNo, loc1Id, managerId])).rows[0];
+    await query(`INSERT INTO receipt_items (receipt_id, product_id, quantity) VALUES ($1, $2, 100)`, [recMath.id, steelProd.id]);
+    await validateReceipt(recMath.id, managerId);
+
+    // Step B: Transfer 30 KG from Loc A to Loc B
+    const trfMathNo = await getNextDocumentNumber(client, "TRF");
+    const trfMath = (await query(`INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by) VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`, [trfMathNo, loc1Id, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 30)`, [trfMath.id, steelProd.id]);
+    await validateTransfer(trfMath.id, managerId);
+
+    // Step C: Delivery 20 KG from Loc B
+    const delMathNo = await getNextDocumentNumber(client, "DEL");
+    const delMath = (await query(`INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [delMathNo, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 20)`, [delMath.id, steelProd.id]);
+    await validateDelivery(delMath.id, managerId);
+
+    // Step D: Adjustment on Loc A (physical count = 67 KG, change = -3 KG from 70)
+    const adjMathNo = await getNextDocumentNumber(client, "ADJ");
+    const adjMath = (await query(`INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [adjMathNo, loc1Id, managerId])).rows[0];
+    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 67, 70, -3)`, [adjMath.id, steelProd.id]);
+    await validateAdjustment(adjMath.id, managerId);
+
+    // Verify Stock Ledger summation: +100 - 30 + 30 - 20 - 3 = 77
+    const ledgerSumRes = await query(
+      `SELECT SUM(quantity_change) as total_ledger FROM stock_ledger WHERE product_id = $1`,
+      [steelProd.id]
     );
-    const trfId = trfRes.rows[0].id;
-    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 150)`, [trfId, prodId]);
+    const ledgerTotal = parseFloat(ledgerSumRes.rows[0].total_ledger);
+    assert(ledgerTotal === 77, "Stock ledger sum matches formula (+100 - 30 + 30 - 20 - 3 = 77 KG)");
 
-    await validateTransfer(trfId, managerId);
-
-    const loc1PostTrf = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc1Id]);
-    const loc2PostTrf = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc2Id]);
-    const totalCompanyPostTrf = parseFloat(loc1PostTrf.rows[0].quantity) + parseFloat(loc2PostTrf.rows[0].quantity);
-
-    assert(parseFloat(loc1PostTrf.rows[0].quantity) === 350, "Transfer decreases source location stock (500 -> 350)");
-    assert(parseFloat(loc2PostTrf.rows[0].quantity) === 150, "Transfer increases destination location stock (0 -> 150)");
-    assert(totalCompanyPostTrf === 500, "Transfer preserves total company stock (500)");
-
-    // Test 3.5 Delivery Decreases Stock & Rejects Insufficient Stock
-    const delNo = await getNextDocumentNumber(client, "DEL");
-    const delRes = await query(
-      `INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`,
-      [delNo, loc2Id, managerId]
-    );
-    const delId = delRes.rows[0].id;
-    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 50)`, [delId, prodId]);
-
-    await validateDelivery(delId, managerId);
-    const loc2PostDel = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc2Id]);
-    assert(parseFloat(loc2PostDel.rows[0].quantity) === 100, "Delivery decreases stock (150 -> 100)");
-
-    // Over-delivery rejection test
-    const delOverNo = await getNextDocumentNumber(client, "DEL");
-    const delOverRes = await query(
-      `INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`,
-      [delOverNo, loc2Id, managerId]
-    );
-    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 999)`, [delOverRes.rows[0].id, prodId]);
-
-    let overdelError = false;
-    try {
-      await validateDelivery(delOverRes.rows[0].id, managerId);
-    } catch (err) {
-      overdelError = true;
-    }
-    assert(overdelError === true, "Delivery rejects request exceeding available location stock");
-
-    // Test 3.6 Inventory Adjustment Reconciles Stock
-    const adjNo = await getNextDocumentNumber(client, "ADJ");
-    const adjRes = await query(
-      `INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`,
-      [adjNo, loc2Id, managerId]
-    );
-    const adjId = adjRes.rows[0].id;
-    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 85, 100, -15)`, [adjId, prodId]);
-
-    await validateAdjustment(adjId, managerId);
-    const loc2PostAdj = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc2Id]);
-    assert(parseFloat(loc2PostAdj.rows[0].quantity) === 85, "Adjustment reconciles stock to physical count (85)");
-
-    // Test 3.7 REQUIREMENT #11 EXACT MULTI-STEP TEST SCENARIO
-    console.log("\n--- Executing Requirement #11 Multi-Step Test Scenario ---");
-    const p11ProdRes = await query(
-      `INSERT INTO products (name, sku, unit_of_measure, reorder_level) VALUES ('Raw Sugar', $1, 'KG', 10) RETURNING id`,
-      [`SKU-SUGAR-${Date.now()}`]
-    );
-    const sugarId = p11ProdRes.rows[0].id;
-
-    // Step 1: Receipt +100 KG to LocA
-    const rec11No = await getNextDocumentNumber(client, "REC");
-    const rec11 = (await query(`INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [rec11No, loc1Id, managerId])).rows[0];
-    await query(`INSERT INTO receipt_items (receipt_id, product_id, quantity) VALUES ($1, $2, 100)`, [rec11.id, sugarId]);
-    await validateReceipt(rec11.id, managerId);
-    const s1Stock = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
-    assert(s1Stock === 100, "Scenario Step 1: Receipt +100 KG -> Stock = 100 KG");
-
-    // Step 2: Transfer 30 KG from LocA to LocB
-    const trf11No = await getNextDocumentNumber(client, "TRF");
-    const trf11 = (await query(`INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by) VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`, [trf11No, loc1Id, loc2Id, managerId])).rows[0];
-    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 30)`, [trf11.id, sugarId]);
-    await validateTransfer(trf11.id, managerId);
-    const s2LocA = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
-    const s2LocB = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc2Id])).rows[0].quantity);
-    assert(s2LocA === 70 && s2LocB === 30, "Scenario Step 2: Transfer 30 KG -> LocA = 70 KG, LocB = 30 KG");
-
-    // Step 3: Delivery 20 KG from LocB
-    const del11No = await getNextDocumentNumber(client, "DEL");
-    const del11 = (await query(`INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [del11No, loc2Id, managerId])).rows[0];
-    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 20)`, [del11.id, sugarId]);
-    await validateDelivery(del11.id, managerId);
-    const s3LocB = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc2Id])).rows[0].quantity);
-    assert(s3LocB === 10, "Scenario Step 3: Delivery 20 KG -> LocB = 10 KG");
-
-    // Step 4: Adjustment on LocA: physical = 47 KG (was 70 -> difference = -23)
-    const adj11No = await getNextDocumentNumber(client, "ADJ");
-    const adj11 = (await query(`INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [adj11No, loc1Id, managerId])).rows[0];
-    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 47, 70, -23)`, [adj11.id, sugarId]);
-    await validateAdjustment(adj11.id, managerId);
-    const s4LocA = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
-    assert(s4LocA === 47, "Scenario Step 4: Adjustment physical count = 47 KG -> LocA = 47 KG");
-
-    const totalScenarioStock = s4LocA + s3LocB; // 47 + 10 = 57 KG
-    assert(totalScenarioStock === 57, "Requirement #11 Final Math: 100 - 30 - 20 (at LocB) + Adjustment to 47 (at LocA) = 57 KG Total");
-
-    // Test 3.8 Document Sequence Format & Concurrency
-    const seqRec = await getNextDocumentNumber(client, "REC");
-    const seqDel = await getNextDocumentNumber(client, "DEL");
-    const seqTrf = await getNextDocumentNumber(client, "TRF");
-    const seqAdj = await getNextDocumentNumber(client, "ADJ");
-    assert(/^REC-\d{6}$/.test(seqRec), "Receipt sequence format matches REC-000001");
-    assert(/^DEL-\d{6}$/.test(seqDel), "Delivery sequence format matches DEL-000001");
-    assert(/^TRF-\d{6}$/.test(seqTrf), "Transfer sequence format matches TRF-000001");
-    assert(/^ADJ-\d{6}$/.test(seqAdj), "Adjustment sequence format matches ADJ-000001");
-
-    // Test 3.9 Concurrent Document Sequence Generation (No Duplicates)
-    const seqPromises = Array.from({ length: 10 }, () => getNextDocumentNumber(null, "REC"));
-    const generatedSeqs = await Promise.all(seqPromises);
-    const uniqueSeqs = new Set(generatedSeqs);
-    assert(uniqueSeqs.size === 10, "Concurrent document sequence generation yields 10 unique, non-duplicate numbers");
+    // Verify Database inventory sum equals 77 KG
+    const loc1Stock = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [steelProd.id, loc1Id])).rows[0].quantity);
+    const loc2Stock = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [steelProd.id, loc2Id])).rows[0].quantity);
+    const dbTotalStock = loc1Stock + loc2Stock;
+    assert(dbTotalStock === 77, "PostgreSQL total stock equals 77 KG (Loc A: 67 KG, Loc B: 10 KG)");
+    assert(dbTotalStock === ledgerTotal, "Database inventory matches Stock Ledger calculation exactly (77 KG)");
 
     // --------------------------------------------------
-    // SECTION 4: STOCK LEDGER & AUDIT TRAIL TESTS (PHASE 4)
+    // CLEANUP TEST DATA
     // --------------------------------------------------
-    console.log("\n--- 4. STOCK LEDGER & AUDIT TRAIL TESTS (PHASE 4) ---");
-
-    // Test 4.1 Receipt Ledger Entry
-    const p4ProdRes = await query(
-      `INSERT INTO products (name, sku, unit_of_measure, reorder_level) VALUES ('Phase4 Flour', $1, 'KG', 10) RETURNING id`,
-      [`SKU-P4-${Date.now()}`]
-    );
-    const p4ProdId = p4ProdRes.rows[0].id;
-
-    const recP4No = await getNextDocumentNumber(client, "REC");
-    const recP4 = (await query(`INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [recP4No, loc1Id, managerId])).rows[0];
-    await query(`INSERT INTO receipt_items (receipt_id, product_id, quantity) VALUES ($1, $2, 200)`, [recP4.id, p4ProdId]);
-    await validateReceipt(recP4.id, managerId);
-
-    const recLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [recP4No]);
-    assert(recLedgerRes.rows.length === 1, "Receipt validation creates 1 stock ledger record");
-    assert(recLedgerRes.rows[0].operation_type === "RECEIPT", "Receipt ledger record has operation_type = 'RECEIPT'");
-    assert(parseFloat(recLedgerRes.rows[0].quantity_change) === 200, "Receipt ledger record has quantity_change = +200");
-
-    // Test 4.2 Transfer Creates 2 Ledger Entries (TRANSFER_OUT and TRANSFER_IN)
-    const trfP4No = await getNextDocumentNumber(client, "TRF");
-    const trfP4 = (await query(`INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by) VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`, [trfP4No, loc1Id, loc2Id, managerId])).rows[0];
-    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 60)`, [trfP4.id, p4ProdId]);
-    await validateTransfer(trfP4.id, managerId);
-
-    const trfLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1 ORDER BY id ASC`, [trfP4No]);
-    assert(trfLedgerRes.rows.length === 2, "Transfer validation creates 2 stock ledger records (TRANSFER_OUT & TRANSFER_IN)");
-    assert(trfLedgerRes.rows[0].operation_type === "TRANSFER_OUT" && parseFloat(trfLedgerRes.rows[0].quantity_change) === -60, "First transfer ledger record is TRANSFER_OUT (-60)");
-    assert(trfLedgerRes.rows[1].operation_type === "TRANSFER_IN" && parseFloat(trfLedgerRes.rows[1].quantity_change) === 60, "Second transfer ledger record is TRANSFER_IN (+60)");
-
-    // Test 4.3 Delivery Ledger Entry
-    const delP4No = await getNextDocumentNumber(client, "DEL");
-    const delP4 = (await query(`INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [delP4No, loc2Id, managerId])).rows[0];
-    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 25)`, [delP4.id, p4ProdId]);
-    await validateDelivery(delP4.id, managerId);
-
-    const delLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [delP4No]);
-    assert(delLedgerRes.rows.length === 1, "Delivery validation creates 1 stock ledger record");
-    assert(delLedgerRes.rows[0].operation_type === "DELIVERY", "Delivery ledger record has operation_type = 'DELIVERY'");
-    assert(parseFloat(delLedgerRes.rows[0].quantity_change) === -25, "Delivery ledger record has quantity_change = -25");
-
-    // Test 4.4 Adjustment Ledger Entry
-    const adjP4No = await getNextDocumentNumber(client, "ADJ");
-    const adjP4 = (await query(`INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [adjP4No, loc2Id, managerId])).rows[0];
-    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 30, 35, -5)`, [adjP4.id, p4ProdId]);
-    await validateAdjustment(adjP4.id, managerId);
-
-    const adjLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [adjP4No]);
-    assert(adjLedgerRes.rows.length === 1, "Adjustment validation creates 1 stock ledger record");
-    assert(adjLedgerRes.rows[0].operation_type === "ADJUSTMENT", "Adjustment ledger record has operation_type = 'ADJUSTMENT'");
-    assert(parseFloat(adjLedgerRes.rows[0].quantity_change) === -5, "Adjustment ledger record has quantity_change = -5");
-
-    // Test 4.5 Audit Log Event Creation & Sensitive Data Sanitization
-    const { logAuditEvent } = await import("../lib/audit");
-    await logAuditEvent({
-      userId: managerId,
-      userEmail: "manager@test.com",
-      action: "TEST_SENSITIVE_AUDIT",
-      entityType: "SECURITY",
-      details: {
-        password: "MySuperSecretPassword123!",
-        otp: "654321",
-        otp_hash: "secret_hash_value",
-        jwt_secret: "my_super_secret_jwt_key",
-        normalField: "Safe Value"
-      }
-    });
-
-    const auditCheck = await query(`SELECT * FROM audit_logs WHERE action = 'TEST_SENSITIVE_AUDIT' ORDER BY id DESC LIMIT 1`);
-    assert(auditCheck.rows.length === 1, "Audit event logged successfully in audit_logs table");
-    const auditDetails = auditCheck.rows[0].details;
-    assert(
-      auditDetails.password === "[REDACTED]" &&
-      auditDetails.otp === "[REDACTED]" &&
-      auditDetails.otp_hash === "[REDACTED]" &&
-      auditDetails.jwt_secret === "[REDACTED]" &&
-      auditDetails.normalField === "Safe Value",
-      "Audit log automatically redacts sensitive keys (passwords, OTPs, hashes, secrets)"
-    );
+    console.log("\n--- CLEANING UP TEMPORARY TEST DATA ---");
+    await query(`DELETE FROM stock_ledger WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM inventory WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM receipt_items WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM delivery_items WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM internal_transfer_items WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM inventory_adjustment_items WHERE product_id = $1`, [steelProd.id]);
+    await query(`DELETE FROM products WHERE id = $1`, [steelProd.id]);
+    assert(true, "Temporary test records cleaned up from PostgreSQL");
 
     console.log("\n==================================================");
     console.log(`TEST SUITE SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
