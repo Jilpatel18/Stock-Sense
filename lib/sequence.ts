@@ -1,5 +1,4 @@
 import { PoolClient } from "pg";
-import { query } from "./db";
 
 export async function getNextDocumentNumber(
   client: PoolClient | null,

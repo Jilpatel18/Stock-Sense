@@ -30,10 +30,6 @@ export default function WarehousesPage() {
 
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchWarehouses();
-  }, []);
-
   const fetchWarehouses = async () => {
     setLoading(true);
     try {
@@ -48,6 +44,10 @@ export default function WarehousesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchWarehouses();
+  }, []);
 
   const handleCreateWarehouse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +134,7 @@ export default function WarehousesPage() {
         <div className="text-center py-12 text-zinc-500 text-xs">Loading warehouses & locations...</div>
       ) : warehouses.length === 0 ? (
         <div className="text-center py-12 text-zinc-500 text-xs bg-white border border-zinc-200 rounded-2xl shadow-sm">
-          No warehouses found. Click "Add Warehouse" to build your facility hierarchy.
+          No warehouses found. Click &quot;Add Warehouse&quot; to build your facility hierarchy.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

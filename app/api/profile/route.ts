@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
 import { requireAuth, comparePassword, hashPassword, setSessionCookie, handleAuthError } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 export async function GET() {
   try {
@@ -52,8 +53,9 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
       }
 
-      if (newPassword.length < 6) {
-        return NextResponse.json({ error: "New password must be at least 6 characters long." }, { status: 400 });
+      const policyError = validatePasswordPolicy(newPassword);
+      if (policyError) {
+        return NextResponse.json({ error: policyError }, { status: 400 });
       }
 
       const newHash = await hashPassword(newPassword);

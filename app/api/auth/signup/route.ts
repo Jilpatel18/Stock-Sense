@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +15,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters long" }, { status: 400 });
+    const policyError = validatePasswordPolicy(password);
+    if (policyError) {
+      return NextResponse.json({ error: policyError }, { status: 400 });
     }
 
-    const existing = await query(`SELECT id FROM users WHERE email = $1`, [email]);
+    const trimmedEmail = email.trim().toLowerCase();
+
+    const existing = await query(`SELECT id FROM users WHERE email = $1`, [trimmedEmail]);
     if (existing.rows.length > 0) {
       return NextResponse.json({ error: "An account with this email already exists." }, { status: 400 });
     }
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
       `INSERT INTO users (name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
        RETURNING id, name, email, role`,
-      [name, email, passwordHash, userRole]
+      [name.trim(), trimmedEmail, passwordHash, userRole]
     );
 
     const user = res.rows[0];

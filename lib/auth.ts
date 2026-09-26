@@ -4,10 +4,10 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("WARNING: JWT_SECRET environment variable is missing in production!");
+  console.warn("SECURITY WARNING: JWT_SECRET environment variable is missing in production!");
 }
 
-const JWT_SECRET_STRING = process.env.JWT_SECRET || "stocksense_super_secret_jwt_key_2026_safe_fallback";
+const JWT_SECRET_STRING = process.env.JWT_SECRET || "stocksense_super_secret_jwt_key_2026_dev_fallback";
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING);
 const COOKIE_NAME = "stocksense_session";
 

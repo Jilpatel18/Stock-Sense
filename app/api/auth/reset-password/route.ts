@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { query } from "@/lib/db";
+import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
 import { hashPassword, comparePassword } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { sendPasswordResetOtp } from "@/lib/email";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 export async function POST(request: Request) {
   try {
@@ -11,66 +13,83 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action, email, otp, newPassword } = body;
 
-    // Action 1: Request OTP
+    // Action 1: Request OTP (with Rate Limiting & Anti-Enumeration)
     if (action === "request_otp") {
-      if (!email) {
+      if (!email || typeof email !== "string") {
         return NextResponse.json({ error: "Email is required" }, { status: 400 });
       }
 
-      const userRes = await query(`SELECT id, name FROM users WHERE email = $1`, [email]);
-      if (userRes.rows.length === 0) {
-        return NextResponse.json({ error: "No account found with this email" }, { status: 404 });
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // Rate limit check: Maximum 3 requests within 15 minutes
+      const rateCheck = await query(
+        `SELECT COUNT(*) FROM password_reset_otps 
+         WHERE email = $1 AND created_at >= NOW() - INTERVAL '15 minutes'`,
+        [trimmedEmail]
+      );
+      const requestCount = parseInt(rateCheck.rows[0].count);
+
+      if (requestCount >= 3) {
+        return NextResponse.json(
+          { error: "Too many OTP requests for this email. Please wait 15 minutes before trying again." },
+          { status: 429 }
+        );
       }
 
-      // Generate cryptographically secure random 6-digit OTP
-      const generatedOtp = crypto.randomInt(100000, 999999).toString();
-      const otpHash = await hashPassword(generatedOtp);
+      // Check account existence
+      const userRes = await query(`SELECT id FROM users WHERE email = $1`, [trimmedEmail]);
+      if (userRes.rows.length > 0) {
+        // Generate 6-digit OTP
+        const generatedOtp = crypto.randomInt(100000, 999999).toString();
+        const otpHash = await hashPassword(generatedOtp);
 
-      // Invalidate previous unused OTPs for this email
-      await query(
-        `UPDATE password_reset_otps SET is_used = true WHERE email = $1 AND is_used = false`,
-        [email]
-      );
+        // Invalidate prior active OTPs for email
+        await query(
+          `UPDATE password_reset_otps SET is_used = true WHERE email = $1 AND is_used = false`,
+          [trimmedEmail]
+        );
 
-      // Store hashed OTP in PostgreSQL with 10-minute expiry
-      await query(
-        `INSERT INTO password_reset_otps (email, otp_hash, expires_at)
-         VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-        [email, otpHash]
-      );
+        // Store hashed OTP with 10-minute expiry
+        await query(
+          `INSERT INTO password_reset_otps (email, otp_hash, expires_at)
+           VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+          [trimmedEmail, otpHash]
+        );
 
-      // Development / Local console log fallback
-      console.log(`\n==================================================`);
-      console.log(`[STOCKSENSE RESET OTP] Email: ${email} | OTP: ${generatedOtp}`);
-      console.log(`==================================================\n`);
+        // Send OTP via email abstraction
+        await sendPasswordResetOtp(trimmedEmail, generatedOtp);
 
-      await logAuditEvent({
-        userEmail: email,
-        action: "OTP_REQUESTED",
-      });
+        await logAuditEvent({
+          userEmail: trimmedEmail,
+          action: "OTP_REQUESTED",
+        });
+      }
 
+      // Safe anti-enumeration generic response
       return NextResponse.json({
         success: true,
-        message: "Verification OTP generated and sent. (In dev mode, check your server log).",
+        message: "If an account exists for this email, a verification OTP has been sent.",
       });
     }
 
     // Action 2: Verify OTP
     if (action === "verify_otp") {
       if (!email || !otp) {
-        return NextResponse.json({ error: "Email and OTP are required" }, { status: 400 });
+        return NextResponse.json({ error: "Email and OTP code are required" }, { status: 400 });
       }
+
+      const trimmedEmail = email.trim().toLowerCase();
 
       const otpRes = await query(
         `SELECT * FROM password_reset_otps 
          WHERE email = $1 AND is_used = false AND expires_at > NOW() 
          ORDER BY created_at DESC LIMIT 1`,
-        [email]
+        [trimmedEmail]
       );
 
       if (otpRes.rows.length === 0) {
         return NextResponse.json(
-          { error: "OTP has expired or no reset request was found. Please request a new OTP." },
+          { error: "OTP has expired or no active reset request exists. Please request a new OTP." },
           { status: 400 }
         );
       }
@@ -80,7 +99,7 @@ export async function POST(request: Request) {
       if (record.attempts >= 5) {
         await query(`UPDATE password_reset_otps SET is_used = true WHERE id = $1`, [record.id]);
         return NextResponse.json(
-          { error: "Too many failed attempts. Please request a new OTP." },
+          { error: "Too many failed verification attempts. Please request a new OTP." },
           { status: 400 }
         );
       }
@@ -89,14 +108,17 @@ export async function POST(request: Request) {
 
       if (!isValid) {
         await query(`UPDATE password_reset_otps SET attempts = attempts + 1 WHERE id = $1`, [record.id]);
-        return NextResponse.json({ error: "Invalid OTP code. Please check and try again." }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid OTP code. Please check and try again." },
+          { status: 400 }
+        );
       }
 
       // Mark verified
       await query(`UPDATE password_reset_otps SET is_verified = true WHERE id = $1`, [record.id]);
 
       await logAuditEvent({
-        userEmail: email,
+        userEmail: trimmedEmail,
         action: "OTP_VERIFIED",
       });
 
@@ -106,52 +128,69 @@ export async function POST(request: Request) {
       });
     }
 
-    // Action 3: Reset Password
+    // Action 3: Atomic Reset Password
     if (action === "reset_password") {
       if (!email || !newPassword) {
         return NextResponse.json({ error: "Email and new password are required" }, { status: 400 });
       }
 
-      if (newPassword.length < 6) {
-        return NextResponse.json({ error: "Password must be at least 6 characters long" }, { status: 400 });
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // Password policy validation
+      const policyError = validatePasswordPolicy(newPassword);
+      if (policyError) {
+        return NextResponse.json({ error: policyError }, { status: 400 });
       }
 
-      // Verify that there is a verified, un-used, non-expired OTP record
-      const otpRes = await query(
-        `SELECT * FROM password_reset_otps 
-         WHERE email = $1 AND is_verified = true AND is_used = false AND expires_at > NOW() 
-         ORDER BY created_at DESC LIMIT 1`,
-        [email]
-      );
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
 
-      if (otpRes.rows.length === 0) {
-        return NextResponse.json(
-          { error: "OTP verification missing or session expired. Please verify your OTP again." },
-          { status: 400 }
+        // 1. Lock verified OTP row (FOR UPDATE)
+        const otpRes = await client.query(
+          `SELECT * FROM password_reset_otps 
+           WHERE email = $1 AND is_verified = true AND is_used = false AND expires_at > NOW() 
+           ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+          [trimmedEmail]
         );
+
+        if (otpRes.rows.length === 0) {
+          throw new Error("OTP verification missing, expired, or already used. Please request a new OTP.");
+        }
+
+        const record = otpRes.rows[0];
+
+        // 2. Update password hash
+        const newHash = await hashPassword(newPassword);
+        await client.query(
+          `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
+          [newHash, trimmedEmail]
+        );
+
+        // 3. Mark OTP as used
+        await client.query(
+          `UPDATE password_reset_otps SET is_used = true WHERE email = $1`,
+          [trimmedEmail]
+        );
+
+        // 4. Record audit event inside transaction
+        await client.query(
+          `INSERT INTO audit_logs (user_email, action, details, created_at)
+           VALUES ($1, 'PASSWORD_RESET_SUCCESS', $2, NOW())`,
+          [trimmedEmail, JSON.stringify({ otp_id: record.id })]
+        );
+
+        await client.query("COMMIT");
+        return NextResponse.json({
+          success: true,
+          message: "Password reset successfully! You can now log in with your new password.",
+        });
+      } catch (err: any) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: err.message || "Failed to reset password" }, { status: 400 });
+      } finally {
+        client.release();
       }
-
-      const record = otpRes.rows[0];
-
-      // Update password hash in users table
-      const newHash = await hashPassword(newPassword);
-      await query(
-        `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
-        [newHash, email]
-      );
-
-      // Invalidate all OTPs for this email
-      await query(`UPDATE password_reset_otps SET is_used = true WHERE email = $1`, [email]);
-
-      await logAuditEvent({
-        userEmail: email,
-        action: "PASSWORD_RESET_SUCCESS",
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: "Password reset successfully! You can now log in with your new password.",
-      });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

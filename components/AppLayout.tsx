@@ -40,10 +40,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [seedNotification, setSeedNotification] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchUser();
-  }, [pathname]);
-
   const fetchUser = async () => {
     try {
       const res = await fetch("/api/auth/me");
@@ -53,12 +49,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (err) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUser();
+  }, [pathname]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
