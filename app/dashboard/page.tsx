@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
+import ValidationPreviewModal from "@/components/ValidationPreviewModal";
 import {
   Boxes,
   AlertTriangle,
@@ -14,13 +15,26 @@ import {
   Filter,
   CheckCircle2,
   RefreshCw,
+  Warehouse,
+  Activity,
+  PieChart,
+  XCircle,
+  PackageCheck,
+  TrendingUp,
+  History,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [validatingId, setValidatingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  // Validation Preview Modal state
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Movement timeframe toggle ('7' or '30')
+  const [movementDays, setMovementDays] = useState<"7" | "30">("7");
 
   // Filters
   const [docType, setDocType] = useState("All");
@@ -45,14 +59,8 @@ export default function DashboardPage() {
         fetch("/api/locations"),
         fetch("/api/categories"),
       ]);
-      if (locRes.ok) {
-        const d = await locRes.json();
-        setLocations(d.locations || []);
-      }
-      if (catRes.ok) {
-        const d = await catRes.json();
-        setCategories(d.categories || []);
-      }
+      if (locRes.ok) setLocations((await locRes.json()).locations || []);
+      if (catRes.ok) setCategories((await catRes.json()).categories || []);
     } catch (err) {
       console.error(err);
     }
@@ -79,40 +87,55 @@ export default function DashboardPage() {
     }
   };
 
-  const handleValidateDocument = async (doc: any) => {
-    setValidatingId(`${doc.type}-${doc.id}`);
-    setActionMessage(null);
+  const handleOpenValidationModal = (doc: any) => {
+    setPreviewDoc(doc);
+    setShowPreviewModal(true);
+  };
+
+  const handleExecuteValidation = async () => {
+    if (!previewDoc) return;
 
     let endpoint = "";
-    if (doc.type === "Receipt") endpoint = `/api/operations/receipts/${doc.id}/validate`;
-    else if (doc.type === "Delivery") endpoint = `/api/operations/deliveries/${doc.id}/validate`;
-    else if (doc.type === "Internal") endpoint = `/api/operations/transfers/${doc.id}/validate`;
-    else if (doc.type === "Adjustment") endpoint = `/api/operations/adjustments/${doc.id}/validate`;
+    if (previewDoc.type === "Receipt") endpoint = `/api/operations/receipts/${previewDoc.id}/validate`;
+    else if (previewDoc.type === "Delivery") endpoint = `/api/operations/deliveries/${previewDoc.id}/validate`;
+    else if (previewDoc.type === "Internal") endpoint = `/api/operations/transfers/${previewDoc.id}/validate`;
+    else if (previewDoc.type === "Adjustment") endpoint = `/api/operations/adjustments/${previewDoc.id}/validate`;
 
-    try {
-      const res = await fetch(endpoint, { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setActionMessage(data.message);
-        setTimeout(() => setActionMessage(null), 4000);
-        fetchStats();
-      } else {
-        alert("Validation error: " + (data.error || "Failed to validate document"));
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setValidatingId(null);
+    const res = await fetch(endpoint, { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      setActionMessage(data.message || `Operation ${previewDoc.reference} validated successfully!`);
+      setTimeout(() => setActionMessage(null), 4000);
+      fetchStats();
+    } else {
+      throw new Error(data.error || "Failed to validate document.");
     }
   };
 
   const kpis = stats?.kpis || {
-    totalProducts: 0,
+    totalSkus: 0,
+    totalStock: 0,
     lowStockCount: 0,
+    outOfStockCount: 0,
     pendingReceipts: 0,
     pendingDeliveries: 0,
     scheduledTransfers: 0,
+    recentAdjustments: 0,
   };
+
+  const health = stats?.inventoryHealth || {
+    healthyCount: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
+    healthyPercent: 0,
+    lowStockPercent: 0,
+    outOfStockPercent: 0,
+  };
+
+  const movementData =
+    movementDays === "7"
+      ? stats?.inventoryMovement?.last7Days || { receipts: 0, deliveries: 0, transfers: 0, adjustments: 0 }
+      : stats?.inventoryMovement?.last30Days || { receipts: 0, deliveries: 0, transfers: 0, adjustments: 0 };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -120,10 +143,10 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            Operations Dashboard
+            Operations & Executive Dashboard
           </h1>
           <p className="text-xs text-zinc-600 mt-1">
-            Real-time multi-warehouse inventory status & operational controls
+            Real-time multi-warehouse stock health, ledger movements & operational controls
           </p>
         </div>
 
@@ -131,25 +154,25 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/operations/receipts?new=true"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Receipt
           </Link>
           <Link
             href="/operations/deliveries?new=true"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Delivery
           </Link>
           <Link
             href="/operations/transfers?new=true"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Transfer
           </Link>
           <Link
             href="/operations/adjustments?new=true"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Adjustment
           </Link>
@@ -162,47 +185,71 @@ export default function DashboardPage() {
             <CheckCircle2 className="w-4 h-4 text-white" />
             {actionMessage}
           </span>
-          <span className="text-[10px] text-zinc-300 font-mono">Stock Ledger Updated</span>
+          <span className="text-[10px] text-zinc-300 font-mono">Ledger Updated</span>
         </div>
       )}
 
-      {/* KPI Summary Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* KPI 1: Products */}
+      {/* 8 KPI Summary Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPI 1: Total SKUs */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-600">Total Products</span>
+            <span className="text-xs font-semibold text-zinc-600">Total Active SKUs</span>
             <div className="p-2 rounded-xl bg-zinc-100 text-zinc-900 border border-zinc-200">
               <Boxes className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.totalProducts}</p>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Active catalog items with stock</p>
+          <div className="mt-3">
+            <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.totalSkus}</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Active product master items</p>
           </div>
         </div>
 
-        {/* KPI 2: Low Stock */}
-        <div
-          className={`bg-white border rounded-2xl p-4 flex flex-col justify-between transition-colors shadow-sm ${
-            kpis.lowStockCount > 0 ? "border-black bg-zinc-50/80" : "border-zinc-200"
-          }`}
-        >
+        {/* KPI 2: Total Physical Stock */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-600">Low Stock / Out</span>
-            <div className={`p-2 rounded-xl ${kpis.lowStockCount > 0 ? "bg-black text-white font-bold animate-pulse" : "bg-zinc-100 text-zinc-500"}`}>
+            <span className="text-xs font-semibold text-zinc-600">Total Physical Stock</span>
+            <div className="p-2 rounded-xl bg-zinc-100 text-zinc-900 border border-zinc-200">
+              <PackageCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">
+              {kpis.totalStock.toLocaleString()}
+            </p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Sum of all location quantities</p>
+          </div>
+        </div>
+
+        {/* KPI 3: Low-Stock Products */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-600">Low-Stock SKUs</span>
+            <div className={`p-2 rounded-xl ${kpis.lowStockCount > 0 ? "bg-black text-white font-bold" : "bg-zinc-100 text-zinc-500"}`}>
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <p className="text-2xl font-extrabold tracking-tight text-zinc-950">
-              {kpis.lowStockCount}
-            </p>
+          <div className="mt-3">
+            <p className="text-2xl font-extrabold tracking-tight text-zinc-950">{kpis.lowStockCount}</p>
             <p className="text-[11px] text-zinc-500 mt-0.5">At or below reorder threshold</p>
           </div>
         </div>
 
-        {/* KPI 3: Pending Receipts */}
+        {/* KPI 4: Out-of-Stock Products */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-600">Out of Stock SKUs</span>
+            <div className={`p-2 rounded-xl ${kpis.outOfStockCount > 0 ? "bg-black text-white font-bold" : "bg-zinc-100 text-zinc-500"}`}>
+              <XCircle className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl font-extrabold tracking-tight text-zinc-950">{kpis.outOfStockCount}</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Zero stock balance</p>
+          </div>
+        </div>
+
+        {/* KPI 5: Pending Receipts */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-600">Pending Receipts</span>
@@ -210,13 +257,13 @@ export default function DashboardPage() {
               <ArrowDownRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.pendingReceipts}</p>
             <p className="text-[11px] text-zinc-500 mt-0.5">Incoming goods awaiting validation</p>
           </div>
         </div>
 
-        {/* KPI 4: Pending Deliveries */}
+        {/* KPI 6: Pending Deliveries */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-600">Pending Deliveries</span>
@@ -224,99 +271,351 @@ export default function DashboardPage() {
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.pendingDeliveries}</p>
             <p className="text-[11px] text-zinc-500 mt-0.5">Outgoing customer orders</p>
           </div>
         </div>
 
-        {/* KPI 5: Internal Transfers */}
+        {/* KPI 7: Pending Transfers */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-600">Scheduled Transfers</span>
+            <span className="text-xs font-semibold text-zinc-600">Pending Transfers</span>
             <div className="p-2 rounded-xl bg-zinc-100 text-zinc-900 border border-zinc-200">
               <ArrowLeftRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.scheduledTransfers}</p>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Inter-location movements</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Scheduled location movements</p>
+          </div>
+        </div>
+
+        {/* KPI 8: Recent Adjustments */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-600">Recent Adjustments</span>
+            <div className="p-2 rounded-xl bg-zinc-100 text-zinc-900 border border-zinc-200">
+              <SlidersHorizontal className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-2xl font-extrabold text-zinc-950 tracking-tight">{kpis.recentAdjustments}</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Adjustments in last 30 days</p>
           </div>
         </div>
       </div>
 
-      {/* Low Stock Warning Banner if applicable */}
-      {stats?.lowStockItems?.length > 0 && (
-        <div className="bg-zinc-50 border border-zinc-300 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-black" />
-              Low Stock Alert Triggered ({stats.lowStockItems.length} products)
-            </h3>
-            <Link href="/products?filter=low" className="text-xs text-zinc-700 hover:text-black font-semibold underline">
-              View All Low Stock
-            </Link>
+      {/* Grid: Inventory Health & Stock by Warehouse */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Section 2: INVENTORY HEALTH */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-black" />
+              Inventory Health Breakdown
+            </h2>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase">Real Database Metrics</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {stats.lowStockItems.map((item: any) => (
-              <div key={item.id} className="bg-white border border-zinc-200 rounded-xl p-2.5 flex justify-between items-center text-xs shadow-sm">
-                <div>
-                  <p className="font-bold text-zinc-950">{item.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-mono">SKU: {item.sku}</p>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-zinc-950">{item.current_stock}</span>
-                  <span className="text-[10px] text-zinc-500 block">Reorder: {item.reorder_level}</span>
-                </div>
+
+          <div className="space-y-4">
+            {/* Real Percentage Bar */}
+            <div className="w-full bg-zinc-100 rounded-xl h-5 overflow-hidden flex border border-zinc-200 p-0.5">
+              <div
+                style={{ width: `${health.healthyPercent}%` }}
+                className="bg-black h-full rounded-l-lg transition-all duration-500"
+                title={`Healthy: ${health.healthyPercent}%`}
+              />
+              <div
+                style={{ width: `${health.lowStockPercent}%` }}
+                className="bg-zinc-500 h-full transition-all duration-500"
+                title={`Low Stock: ${health.lowStockPercent}%`}
+              />
+              <div
+                style={{ width: `${health.outOfStockPercent}%` }}
+                className="bg-zinc-300 h-full rounded-r-lg transition-all duration-500"
+                title={`Out of Stock: ${health.outOfStockPercent}%`}
+              />
+            </div>
+
+            {/* Metrics cards */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Healthy</span>
+                <span className="text-xl font-extrabold text-zinc-950">{health.healthyPercent}%</span>
+                <span className="text-[10px] text-zinc-400 block font-mono">({health.healthyCount} SKUs)</span>
               </div>
-            ))}
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Low Stock</span>
+                <span className="text-xl font-extrabold text-zinc-950">{health.lowStockPercent}%</span>
+                <span className="text-[10px] text-zinc-400 block font-mono">({health.lowStockCount} SKUs)</span>
+              </div>
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Out of Stock</span>
+                <span className="text-xl font-extrabold text-zinc-950">{health.outOfStockPercent}%</span>
+                <span className="text-[10px] text-zinc-400 block font-mono">({health.outOfStockCount} SKUs)</span>
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Dynamic Filters Bar */}
-      <div className="bg-white border border-zinc-200 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-zinc-900" /> Dynamic Document Filters
-          </span>
+        {/* Section 3: STOCK BY WAREHOUSE */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+              <Warehouse className="w-4 h-4 text-black" />
+              Stock Distribution by Warehouse
+            </h2>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase">Live Location Sum</span>
+          </div>
+
+          <div className="space-y-3">
+            {stats?.stockByWarehouse?.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-4 text-center">No warehouses initialized yet.</p>
+            ) : (
+              stats?.stockByWarehouse?.map((wh: any) => {
+                const totalInv = parseFloat(wh.total_inventory);
+                const percentOfTotal = kpis.totalStock > 0 ? Math.round((totalInv / kpis.totalStock) * 100) : 0;
+                return (
+                  <div key={wh.id} className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-bold text-zinc-950">{wh.name}</span>
+                        <span className="font-mono text-[10px] text-zinc-500 ml-2">({wh.code})</span>
+                      </div>
+                      <span className="font-mono font-extrabold text-zinc-950">
+                        {totalInv.toLocaleString()} <span className="text-[10px] text-zinc-500 font-normal">units</span>
+                      </span>
+                    </div>
+                    {/* Visual Bar */}
+                    <div className="w-full bg-zinc-200 rounded-full h-2 overflow-hidden">
+                      <div className="bg-black h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 4: INVENTORY MOVEMENT CHART / BREAKDOWN (7/30 DAYS) */}
+      <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200 pb-3 gap-2">
+          <div>
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-black" />
+              Inventory Ledger Movement Volume
+            </h2>
+            <p className="text-[11px] text-zinc-500">Aggregated quantities moved from immutable stock ledger</p>
+          </div>
+
+          <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200 self-start sm:self-auto">
+            <button
+              onClick={() => setMovementDays("7")}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                movementDays === "7" ? "bg-black text-white shadow-xs" : "text-zinc-600 hover:text-zinc-950"
+              }`}
+            >
+              Last 7 Days
+            </button>
+            <button
+              onClick={() => setMovementDays("30")}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                movementDays === "30" ? "bg-black text-white shadow-xs" : "text-zinc-600 hover:text-zinc-950"
+              }`}
+            >
+              Last 30 Days
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-xs text-zinc-600 font-semibold">
+              <span>Receipts Received</span>
+              <ArrowDownRight className="w-4 h-4 text-zinc-900" />
+            </div>
+            <p className="text-xl font-extrabold text-zinc-950 font-mono">+{movementData.receipts}</p>
+            <p className="text-[10px] text-zinc-500 font-mono">Incoming stock posted</p>
+          </div>
+
+          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-xs text-zinc-600 font-semibold">
+              <span>Deliveries Shipped</span>
+              <ArrowUpRight className="w-4 h-4 text-zinc-900" />
+            </div>
+            <p className="text-xl font-extrabold text-zinc-950 font-mono">-{movementData.deliveries}</p>
+            <p className="text-[10px] text-zinc-500 font-mono">Outgoing stock fulfilled</p>
+          </div>
+
+          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-xs text-zinc-600 font-semibold">
+              <span>Transfers Relocated</span>
+              <ArrowLeftRight className="w-4 h-4 text-zinc-900" />
+            </div>
+            <p className="text-xl font-extrabold text-zinc-950 font-mono">±{movementData.transfers}</p>
+            <p className="text-[10px] text-zinc-500 font-mono">Inter-warehouse volume</p>
+          </div>
+
+          <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-xs text-zinc-600 font-semibold">
+              <span>Adjustments Net</span>
+              <SlidersHorizontal className="w-4 h-4 text-zinc-900" />
+            </div>
+            <p className="text-xl font-extrabold text-zinc-950 font-mono">±{movementData.adjustments}</p>
+            <p className="text-[10px] text-zinc-500 font-mono">Physical count variance</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid: Low Stock Table + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Section 5: LOW STOCK / STOCK STATUS TABLE */}
+        <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-black" />
+              Stock Threshold & Health Table
+            </h2>
+            <Link href="/products" className="text-xs text-zinc-700 hover:text-black font-semibold underline">
+              View All Products
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-100 text-zinc-700 border-b border-zinc-200 font-bold text-[11px]">
+                <tr>
+                  <th className="px-3 py-2.5">Product</th>
+                  <th className="px-3 py-2.5">SKU</th>
+                  <th className="px-3 py-2.5">Warehouse / Location</th>
+                  <th className="px-3 py-2.5">Stock</th>
+                  <th className="px-3 py-2.5">Reorder Level</th>
+                  <th className="px-3 py-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 text-zinc-800">
+                {stats?.allProductsStock?.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-6 text-center text-zinc-500">
+                      No product inventory records available.
+                    </td>
+                  </tr>
+                ) : (
+                  stats?.allProductsStock?.slice(0, 8).map((prod: any) => (
+                    <tr key={prod.id} className="hover:bg-zinc-50 transition-colors">
+                      <td className="px-3 py-2.5 font-bold text-zinc-950">{prod.name}</td>
+                      <td className="px-3 py-2.5 font-mono text-[11px] text-zinc-600">{prod.sku}</td>
+                      <td className="px-3 py-2.5 text-[11px] text-zinc-600">
+                        {prod.warehouse_names || "Main Hub"} ({prod.location_names || "Default"})
+                      </td>
+                      <td className="px-3 py-2.5 font-mono font-extrabold text-zinc-950">
+                        {prod.current_stock} {prod.unit_of_measure}
+                      </td>
+                      <td className="px-3 py-2.5 font-mono text-zinc-600">
+                        {prod.reorder_level} {prod.unit_of_measure}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border uppercase tracking-wider ${
+                            prod.status === "OUT OF STOCK"
+                              ? "bg-black text-white border-black"
+                              : prod.status === "LOW STOCK"
+                              ? "bg-zinc-200 text-zinc-950 border-zinc-400"
+                              : "bg-zinc-100 text-zinc-800 border-zinc-300"
+                          }`}
+                        >
+                          {prod.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Section 6: RECENT ACTIVITY */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
+              <History className="w-4 h-4 text-black" />
+              Recent Activity Feed
+            </h2>
+            <Link href="/operations/history" className="text-xs text-zinc-700 hover:text-black font-semibold underline">
+              Full Ledger
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            {stats?.recentActivity?.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-4 text-center">No recent activity recorded.</p>
+            ) : (
+              stats?.recentActivity?.map((act: any) => {
+                const change = parseFloat(act.quantity_change);
+                return (
+                  <div key={act.id} className="p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-zinc-950">{act.product_name}</span>
+                      <span className="font-mono text-[10px] font-bold text-zinc-900">
+                        {change > 0 ? `+${change}` : change}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                      <span>{act.user_name || "System User"}</span>
+                      <span className="font-mono">{new Date(act.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filterable Operations Feed Table */}
+      <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm space-y-3">
+        <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-zinc-950">Operational Documents Feed</h2>
+            <p className="text-[11px] text-zinc-600">
+              Filtered operations queue. Click "Validate" to trigger validation preview & post stock ledger entries.
+            </p>
+          </div>
           <button
-            onClick={() => {
-              setDocType("All");
-              setStatus("All");
-              setSelectedLocation("All");
-              setSelectedCategory("All");
-            }}
-            className="text-[11px] text-zinc-500 hover:text-zinc-900 font-medium transition-colors"
+            onClick={fetchStats}
+            className="text-zinc-500 hover:text-zinc-900 p-1.5 rounded-lg hover:bg-zinc-100 transition-colors self-start sm:self-auto"
+            title="Refresh Feed"
           >
-            Reset Filters
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Doc Type Filter */}
+        {/* Dynamic Filters Bar */}
+        <div className="px-4 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
-            <label className="block text-[11px] text-zinc-600 mb-1 font-medium">Document Type</label>
+            <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Doc Type</label>
             <select
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-2.5 py-1.5 focus:outline-none focus:border-black"
             >
               <option value="All">All Document Types</option>
-              <option value="Receipts">Receipts (Incoming)</option>
-              <option value="Delivery">Delivery Orders (Outgoing)</option>
-              <option value="Internal">Internal Transfers</option>
-              <option value="Adjustments">Inventory Adjustments</option>
+              <option value="Receipts">Receipts</option>
+              <option value="Delivery">Deliveries</option>
+              <option value="Internal">Transfers</option>
+              <option value="Adjustments">Adjustments</option>
             </select>
           </div>
 
-          {/* Status Filter */}
           <div>
-            <label className="block text-[11px] text-zinc-600 mb-1 font-medium font-sans">Document Status</label>
+            <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-2.5 py-1.5 focus:outline-none focus:border-black"
             >
               <option value="All">All Statuses</option>
               <option value="Draft">Draft</option>
@@ -327,30 +626,28 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          {/* Warehouse / Location Filter */}
           <div>
-            <label className="block text-[11px] text-zinc-600 mb-1 font-medium">Warehouse / Location</label>
+            <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Location</label>
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-2.5 py-1.5 focus:outline-none focus:border-black"
             >
               <option value="All">All Locations</option>
               {locations.map((loc) => (
                 <option key={loc.id} value={loc.id}>
-                  {loc.warehouse_name} → {loc.name} ({loc.code})
+                  {loc.warehouse_name} → {loc.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Product Category Filter */}
           <div>
-            <label className="block text-[11px] text-zinc-600 mb-1 font-medium">Product Category</label>
+            <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Category</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-2.5 py-1.5 focus:outline-none focus:border-black"
             >
               <option value="All">All Categories</option>
               {categories.map((cat) => (
@@ -360,25 +657,6 @@ export default function DashboardPage() {
               ))}
             </select>
           </div>
-        </div>
-      </div>
-
-      {/* Operations Feed Table */}
-      <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-zinc-950">Operational Documents</h2>
-            <p className="text-[11px] text-zinc-600">
-              Showing filtered operations feed. Validate ready documents to post stock changes.
-            </p>
-          </div>
-          <button
-            onClick={fetchStats}
-            className="text-zinc-500 hover:text-zinc-900 p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
-            title="Refresh Feed"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -391,74 +669,78 @@ export default function DashboardPage() {
                 <th className="px-4 py-3">Partner / Reason</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th className="px-4 py-3 text-right">Validate Operation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 text-zinc-800">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
-                    Loading inventory documents...
+                    Loading operations queue...
                   </td>
                 </tr>
               ) : stats?.documents?.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
-                    No documents matching the active filter criteria.
+                    No operational documents matching criteria.
                   </td>
                 </tr>
               ) : (
-                stats?.documents?.map((doc: any) => {
-                  const isValidating = validatingId === `${doc.type}-${doc.id}`;
-                  return (
-                    <tr key={`${doc.type}-${doc.id}`} className="hover:bg-zinc-50 transition-colors">
-                      <td className="px-4 py-3 font-mono font-bold text-zinc-950">
-                        {doc.reference}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-800">
-                          {doc.type === "Receipt" && <ArrowDownRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {doc.type === "Delivery" && <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {doc.type === "Internal" && <ArrowLeftRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {doc.type === "Adjustment" && <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-500" />}
-                          {doc.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="font-semibold text-zinc-950">{doc.location_name}</span>
-                        <span className="text-[10px] text-zinc-500 block">{doc.warehouse_name}</span>
-                      </td>
-                      <td className="px-4 py-3 text-zinc-600">
-                        {doc.partner_or_reason || "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={doc.status} size="sm" />
-                      </td>
-                      <td className="px-4 py-3 text-zinc-500 font-mono text-[11px]">
-                        {new Date(doc.created_at).toLocaleDateString()}{" "}
-                        {new Date(doc.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {doc.status !== "Done" && doc.status !== "Canceled" ? (
-                          <button
-                            onClick={() => handleValidateDocument(doc)}
-                            disabled={isValidating}
-                            className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-sm transition-all disabled:opacity-50"
-                          >
-                            {isValidating ? "Validating..." : "Validate & Post"}
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-zinc-500 font-mono">Posted</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
+                stats?.documents?.map((doc: any) => (
+                  <tr key={`${doc.type}-${doc.id}`} className="hover:bg-zinc-50 transition-colors">
+                    <td className="px-4 py-3 font-mono font-bold text-zinc-950">{doc.reference}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-800">
+                        {doc.type === "Receipt" && <ArrowDownRight className="w-3.5 h-3.5 text-zinc-500" />}
+                        {doc.type === "Delivery" && <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500" />}
+                        {doc.type === "Internal" && <ArrowLeftRight className="w-3.5 h-3.5 text-zinc-500" />}
+                        {doc.type === "Adjustment" && <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-500" />}
+                        {doc.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-semibold text-zinc-950">{doc.location_name}</span>
+                      <span className="text-[10px] text-zinc-500 block">{doc.warehouse_name}</span>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">{doc.partner_or_reason || "—"}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={doc.status} size="sm" />
+                    </td>
+                    <td className="px-4 py-3 text-zinc-500 font-mono text-[11px]">
+                      {new Date(doc.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {doc.status !== "Done" && doc.status !== "Canceled" ? (
+                        <button
+                          onClick={() => handleOpenValidationModal(doc)}
+                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+                        >
+                          Validate & Post
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-zinc-500 font-mono">Posted</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Validation Confirmation Preview Modal */}
+      {previewDoc && (
+        <ValidationPreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewDoc(null);
+          }}
+          onConfirm={handleExecuteValidation}
+          doc={previewDoc}
+        />
+      )}
     </div>
   );
 }

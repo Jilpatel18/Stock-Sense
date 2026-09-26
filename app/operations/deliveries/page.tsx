@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
+import ValidationPreviewModal from "@/components/ValidationPreviewModal";
 import {
   ArrowUpRight,
   Plus,
@@ -25,8 +26,10 @@ function DeliveriesContent() {
   const [status, setStatus] = useState("Draft");
   const [items, setItems] = useState<any[]>([{ product_id: "", quantity: "1" }]);
   const [submitting, setSubmitting] = useState(false);
-  const [validatingId, setValidatingId] = useState<number | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Validation Preview Modal state
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -96,21 +99,27 @@ function DeliveriesContent() {
     }
   };
 
-  const handleValidateDelivery = async (id: number) => {
-    setValidatingId(id);
-    setValidationError(null);
-    try {
-      const res = await fetch(`/api/operations/deliveries/${id}/validate`, { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        fetchData();
-      } else {
-        setValidationError(data.error || "Failed to validate delivery order");
-      }
-    } catch (err: any) {
-      setValidationError("Error: " + err.message);
-    } finally {
-      setValidatingId(null);
+  const handleOpenPreviewModal = (d: any) => {
+    setPreviewDoc({
+      id: d.id,
+      reference: d.delivery_number,
+      type: "Delivery",
+      status: d.status,
+      items: d.items,
+      source_location_id: d.source_location_id,
+      source_location_name: d.source_location_name,
+    });
+    setShowPreviewModal(true);
+  };
+
+  const handleExecuteValidation = async () => {
+    if (!previewDoc) return;
+    const res = await fetch(`/api/operations/deliveries/${previewDoc.id}/validate`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      fetchData();
+    } else {
+      throw new Error(data.error || "Failed to validate delivery order");
     }
   };
 
@@ -134,18 +143,6 @@ function DeliveriesContent() {
           <Plus className="w-4 h-4" /> Create Delivery Order
         </button>
       </div>
-
-      {validationError && (
-        <div className="p-3.5 rounded-xl bg-zinc-100 border border-zinc-300 text-zinc-950 text-xs font-medium flex items-center justify-between shadow-sm">
-          <span className="flex items-center gap-2 font-semibold">
-            <AlertCircle className="w-4 h-4 text-black shrink-0" />
-            {validationError}
-          </span>
-          <button onClick={() => setValidationError(null)} className="text-zinc-500 hover:text-zinc-950 p-1">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Deliveries Table */}
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
@@ -203,11 +200,10 @@ function DeliveriesContent() {
                     <td className="px-4 py-3 text-right">
                       {d.status !== "Done" && d.status !== "Canceled" ? (
                         <button
-                          onClick={() => handleValidateDelivery(d.id)}
-                          disabled={validatingId === d.id}
-                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all disabled:opacity-50"
+                          onClick={() => handleOpenPreviewModal(d)}
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
                         >
-                          {validatingId === d.id ? "Validating..." : "Validate & Decrease Stock"}
+                          Validate Shipment
                         </button>
                       ) : (
                         <span className="text-[11px] text-zinc-500 font-mono flex items-center justify-end gap-1 font-semibold">
@@ -222,6 +218,19 @@ function DeliveriesContent() {
           </table>
         </div>
       </div>
+
+      {/* Validation Preview Modal */}
+      {previewDoc && (
+        <ValidationPreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewDoc(null);
+          }}
+          onConfirm={handleExecuteValidation}
+          doc={previewDoc}
+        />
+      )}
 
       {/* Create Delivery Modal */}
       {showModal && (

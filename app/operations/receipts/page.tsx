@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
+import ValidationPreviewModal from "@/components/ValidationPreviewModal";
 import {
   ArrowDownRight,
   Plus,
@@ -25,7 +26,10 @@ function ReceiptsContent() {
   const [status, setStatus] = useState("Draft");
   const [items, setItems] = useState<any[]>([{ product_id: "", quantity: "1" }]);
   const [submitting, setSubmitting] = useState(false);
-  const [validatingId, setValidatingId] = useState<number | null>(null);
+
+  // Validation Preview Modal state
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -97,20 +101,27 @@ function ReceiptsContent() {
     }
   };
 
-  const handleValidateReceipt = async (id: number) => {
-    setValidatingId(id);
-    try {
-      const res = await fetch(`/api/operations/receipts/${id}/validate`, { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        fetchData();
-      } else {
-        alert("Error: " + (data.error || "Failed to validate receipt"));
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setValidatingId(null);
+  const handleOpenPreviewModal = (r: any) => {
+    setPreviewDoc({
+      id: r.id,
+      reference: r.receipt_number,
+      type: "Receipt",
+      status: r.status,
+      items: r.items,
+      destination_location_id: r.destination_location_id,
+      destination_location_name: r.destination_location_name,
+    });
+    setShowPreviewModal(true);
+  };
+
+  const handleExecuteValidation = async () => {
+    if (!previewDoc) return;
+    const res = await fetch(`/api/operations/receipts/${previewDoc.id}/validate`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      fetchData();
+    } else {
+      throw new Error(data.error || "Failed to validate receipt");
     }
   };
 
@@ -191,11 +202,10 @@ function ReceiptsContent() {
                     <td className="px-4 py-3 text-right">
                       {r.status !== "Done" && r.status !== "Canceled" ? (
                         <button
-                          onClick={() => handleValidateReceipt(r.id)}
-                          disabled={validatingId === r.id}
-                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all disabled:opacity-50"
+                          onClick={() => handleOpenPreviewModal(r)}
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
                         >
-                          {validatingId === r.id ? "Validating..." : "Validate & Increase Stock"}
+                          Validate Stock
                         </button>
                       ) : (
                         <span className="text-[11px] text-zinc-500 font-mono flex items-center justify-end gap-1 font-semibold">
@@ -210,6 +220,19 @@ function ReceiptsContent() {
           </table>
         </div>
       </div>
+
+      {/* Validation Preview Modal */}
+      {previewDoc && (
+        <ValidationPreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewDoc(null);
+          }}
+          onConfirm={handleExecuteValidation}
+          doc={previewDoc}
+        />
+      )}
 
       {/* Create Receipt Modal */}
       {showModal && (

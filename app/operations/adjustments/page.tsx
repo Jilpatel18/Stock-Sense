@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
+import ValidationPreviewModal from "@/components/ValidationPreviewModal";
 import {
   SlidersHorizontal,
   Plus,
@@ -24,7 +25,10 @@ function AdjustmentsContent() {
   const [status, setStatus] = useState("Draft");
   const [items, setItems] = useState<any[]>([{ product_id: "", counted_quantity: "0" }]);
   const [submitting, setSubmitting] = useState(false);
-  const [validatingId, setValidatingId] = useState<number | null>(null);
+
+  // Validation Preview Modal state
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -95,20 +99,26 @@ function AdjustmentsContent() {
     }
   };
 
-  const handleValidateAdjustment = async (id: number) => {
-    setValidatingId(id);
-    try {
-      const res = await fetch(`/api/operations/adjustments/${id}/validate`, { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        fetchData();
-      } else {
-        alert("Error: " + (data.error || "Failed to validate adjustment"));
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    } finally {
-      setValidatingId(null);
+  const handleOpenPreviewModal = (a: any) => {
+    setPreviewDoc({
+      id: a.id,
+      reference: a.adjustment_number,
+      type: "Adjustment",
+      status: a.status,
+      items: a.items,
+      location_name: a.location_name,
+    });
+    setShowPreviewModal(true);
+  };
+
+  const handleExecuteValidation = async () => {
+    if (!previewDoc) return;
+    const res = await fetch(`/api/operations/adjustments/${previewDoc.id}/validate`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      fetchData();
+    } else {
+      throw new Error(data.error || "Failed to validate adjustment");
     }
   };
 
@@ -197,11 +207,10 @@ function AdjustmentsContent() {
                     <td className="px-4 py-3 text-right">
                       {a.status !== "Done" && a.status !== "Canceled" ? (
                         <button
-                          onClick={() => handleValidateAdjustment(a.id)}
-                          disabled={validatingId === a.id}
-                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all disabled:opacity-50"
+                          onClick={() => handleOpenPreviewModal(a)}
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
                         >
-                          {validatingId === a.id ? "Validating..." : "Validate & Reconcile"}
+                          Validate Adjustment
                         </button>
                       ) : (
                         <span className="text-[11px] text-zinc-500 font-mono flex items-center justify-end gap-1 font-semibold">
@@ -216,6 +225,19 @@ function AdjustmentsContent() {
           </table>
         </div>
       </div>
+
+      {/* Validation Preview Modal */}
+      {previewDoc && (
+        <ValidationPreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewDoc(null);
+          }}
+          onConfirm={handleExecuteValidation}
+          doc={previewDoc}
+        />
+      )}
 
       {/* Create Adjustment Modal */}
       {showModal && (

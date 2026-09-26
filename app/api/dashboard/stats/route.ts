@@ -14,50 +14,113 @@ export async function GET(request: Request) {
     const locationId = searchParams.get("location_id");
     const categoryId = searchParams.get("category_id");
 
-    // 1. Total products with active = TRUE
-    const totalProdRes = await query(`
-      SELECT COUNT(DISTINCT product_id) as count FROM inventory WHERE quantity > 0
-    `);
-    const totalProducts = parseInt(totalProdRes.rows[0]?.count || "0");
+    // 1. Total active SKUs & Total physical stock sum
+    const totalSkusRes = await query(`SELECT COUNT(*) as count FROM products WHERE active = TRUE`);
+    const totalSkus = parseInt(totalSkusRes.rows[0]?.count || "0");
 
-    // 2. Low stock & Out of stock items calculation
+    const totalStockRes = await query(`SELECT COALESCE(SUM(quantity), 0) as total FROM inventory`);
+    const totalStock = parseFloat(totalStockRes.rows[0]?.total || "0");
+
+    // 2. Product-level Stock Status Breakdown (Location aware)
     const stockStatsRes = await query(`
       SELECT p.id, p.name, p.sku, p.reorder_level, p.unit_of_measure, c.name as category_name,
-             COALESCE(SUM(i.quantity), 0) as current_stock
+             COALESCE(SUM(i.quantity), 0) as current_stock,
+             STRING_AGG(DISTINCT w.name, ', ') as warehouse_names,
+             STRING_AGG(DISTINCT l.name, ', ') as location_names
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN inventory i ON p.id = i.product_id
+      LEFT JOIN locations l ON i.location_id = l.id
+      LEFT JOIN warehouses w ON l.warehouse_id = w.id
       WHERE p.active = TRUE
       GROUP BY p.id, c.name
     `);
     const allProductsStock = stockStatsRes.rows;
+
     const lowStockItems = allProductsStock.filter(
       (p) => parseFloat(p.current_stock) > 0 && parseFloat(p.current_stock) <= parseFloat(p.reorder_level)
     );
     const outOfStockItems = allProductsStock.filter((p) => parseFloat(p.current_stock) === 0);
+    const healthyItems = allProductsStock.filter(
+      (p) => parseFloat(p.current_stock) > parseFloat(p.reorder_level)
+    );
 
     const lowStockCount = lowStockItems.length;
     const outOfStockCount = outOfStockItems.length;
+    const healthyCount = healthyItems.length;
 
-    // 3. Pending Receipts
-    const pendingRecRes = await query(`
-      SELECT COUNT(*) FROM receipts WHERE status NOT IN ('Done', 'Canceled')
-    `);
+    // Inventory Health Percentages (Real Math)
+    const healthTotal = totalSkus || 1;
+    const healthyPercent = Math.round((healthyCount / healthTotal) * 100);
+    const lowStockPercent = Math.round((lowStockCount / healthTotal) * 100);
+    const outOfStockPercent = Math.round((outOfStockCount / healthTotal) * 100);
+
+    // 3. Pending Operations Count
+    const pendingRecRes = await query(`SELECT COUNT(*) FROM receipts WHERE status NOT IN ('Done', 'Canceled')`);
     const pendingReceipts = parseInt(pendingRecRes.rows[0]?.count || "0");
 
-    // 4. Pending Deliveries
-    const pendingDelRes = await query(`
-      SELECT COUNT(*) FROM delivery_orders WHERE status NOT IN ('Done', 'Canceled')
-    `);
+    const pendingDelRes = await query(`SELECT COUNT(*) FROM delivery_orders WHERE status NOT IN ('Done', 'Canceled')`);
     const pendingDeliveries = parseInt(pendingDelRes.rows[0]?.count || "0");
 
-    // 5. Scheduled Internal Transfers
-    const scheduledTransfersRes = await query(`
-      SELECT COUNT(*) FROM internal_transfers WHERE status NOT IN ('Done', 'Canceled')
-    `);
+    const scheduledTransfersRes = await query(`SELECT COUNT(*) FROM internal_transfers WHERE status NOT IN ('Done', 'Canceled')`);
     const scheduledTransfers = parseInt(scheduledTransfersRes.rows[0]?.count || "0");
 
-    // 6. Aggregate Operations Feed with full filter support (Warehouse, Location, Category, Status, DocType)
+    const recentAdjRes = await query(`SELECT COUNT(*) FROM inventory_adjustments WHERE created_at >= NOW() - INTERVAL '30 days'`);
+    const recentAdjustments = parseInt(recentAdjRes.rows[0]?.count || "0");
+
+    // 4. Stock by Warehouse (Real DB Sum)
+    const whStockRes = await query(`
+      SELECT w.id, w.name, w.code, COALESCE(SUM(i.quantity), 0) as total_inventory, COUNT(DISTINCT i.product_id) as product_count
+      FROM warehouses w
+      LEFT JOIN locations l ON l.warehouse_id = w.id
+      LEFT JOIN inventory i ON i.location_id = l.id
+      GROUP BY w.id, w.name, w.code
+      ORDER BY total_inventory DESC
+    `);
+    const stockByWarehouse = whStockRes.rows;
+
+    // 5. Inventory Movement (Last 7 & 30 Days from stock_ledger)
+    const movement7Res = await query(`
+      SELECT operation_type, COUNT(*) as count, COALESCE(SUM(ABS(quantity_change)), 0) as total_quantity
+      FROM stock_ledger
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY operation_type
+    `);
+
+    const movement30Res = await query(`
+      SELECT operation_type, COUNT(*) as count, COALESCE(SUM(ABS(quantity_change)), 0) as total_quantity
+      FROM stock_ledger
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY operation_type
+    `);
+
+    const formatMovement = (rows: any[]) => {
+      let receipts = 0, deliveries = 0, transfers = 0, adjustments = 0;
+      rows.forEach((r) => {
+        const qty = parseFloat(r.total_quantity);
+        if (r.operation_type === "RECEIPT") receipts += qty;
+        else if (r.operation_type === "DELIVERY") deliveries += qty;
+        else if (r.operation_type.startsWith("TRANSFER")) transfers += qty / 2; // Split IN/OUT double counting
+        else if (r.operation_type === "ADJUSTMENT") adjustments += qty;
+      });
+      return { receipts, deliveries, transfers, adjustments };
+    };
+
+    const movement7Days = formatMovement(movement7Res.rows);
+    const movement30Days = formatMovement(movement30Res.rows);
+
+    // 6. Recent Activity Log (Top 10 real ledger records with user)
+    const recentActivityRes = await query(`
+      SELECT sl.*, p.name as product_name, p.sku, u.name as user_name, l.name as location_name
+      FROM stock_ledger sl
+      JOIN products p ON sl.product_id = p.id
+      JOIN locations l ON sl.location_id = l.id
+      LEFT JOIN users u ON sl.performed_by = u.id
+      ORDER BY sl.created_at DESC
+      LIMIT 10
+    `);
+
+    // 7. Aggregate Operations Feed with full filter support
     let documents: any[] = [];
 
     // Receipts
@@ -224,15 +287,40 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       kpis: {
-        totalProducts,
+        totalSkus,
+        totalStock,
+        totalProducts: totalSkus,
         lowStockCount,
         outOfStockCount,
         pendingReceipts,
         pendingDeliveries,
         scheduledTransfers,
+        recentAdjustments,
+      },
+      inventoryHealth: {
+        healthyCount,
+        lowStockCount,
+        outOfStockCount,
+        healthyPercent,
+        lowStockPercent,
+        outOfStockPercent,
+      },
+      stockByWarehouse,
+      inventoryMovement: {
+        last7Days: movement7Days,
+        last30Days: movement30Days,
       },
       lowStockItems,
       outOfStockItems,
+      allProductsStock: allProductsStock.map((p) => {
+        const current = parseFloat(p.current_stock);
+        const reorder = parseFloat(p.reorder_level);
+        let status = "HEALTHY";
+        if (current === 0) status = "OUT OF STOCK";
+        else if (current <= reorder) status = "LOW STOCK";
+        return { ...p, current_stock: current, reorder_level: reorder, status };
+      }),
+      recentActivity: recentActivityRes.rows,
       documents,
     });
   } catch (err: any) {
@@ -241,3 +329,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: err.message || "Failed to fetch dashboard stats" }, { status: 500 });
   }
 }
+
