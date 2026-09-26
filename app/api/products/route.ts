@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { requireManager, handleAuthError } from "@/lib/auth";
+import { requireManager, requireAuth, handleAuthError } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 
 export async function GET(request: Request) {
   try {
     await initDatabase();
+    await requireAuth();
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("category_id");
     const search = searchParams.get("search");
@@ -100,6 +101,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ products });
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to fetch products" }, { status: 500 });
   }
 }

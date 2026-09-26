@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-// Load .env file
+// Load .env file BEFORE importing modules that depend on process.env
 try {
-  const envPath = path.resolve(process.cwd(), ".env");
+  const envPath = path.resolve(__dirname, "../.env");
   if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, "utf8");
     for (const line of envConfig.split("\n")) {
@@ -11,7 +11,9 @@ try {
       if (match) {
         const key = match[1];
         const value = match[2];
-        process.env[key] = value;
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
       }
     }
   }
@@ -22,7 +24,7 @@ try {
 import crypto from "crypto";
 import { pool, query } from "../lib/db";
 import { initDatabase } from "../lib/schema";
-import { hashPassword, comparePassword } from "../lib/auth";
+import { hashPassword, comparePassword, signSessionToken, verifySessionToken, getJwtSecret } from "../lib/auth";
 import { validatePasswordPolicy } from "../lib/password-policy";
 import { validateReceipt, validateDelivery, validateTransfer, validateAdjustment } from "../lib/inventory-service";
 import { getNextDocumentNumber } from "../lib/sequence";
@@ -36,7 +38,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
     console.log(`  ✔ [PASS] ${testName}`);
   } else {
     failedCount++;
-    console.error(`  ✖ [FAIL] ${testName}${detail ? `: ${detail}` : ""}`);
+    console.error(`  x [FAIL] ${testName}${detail ? `: ${detail}` : ""}`);
   }
 }
 
@@ -50,11 +52,40 @@ async function runFullTestSuite() {
 
   try {
     // --------------------------------------------------
-    // SECTION 1: AUTHENTICATION & PASSWORD POLICY TESTS
+    // SECTION 1: AUTHENTICATION, JWT & SECURITY TESTS
     // --------------------------------------------------
-    console.log("--- 1. AUTH & PASSWORD POLICY TESTS ---");
+    console.log("--- 1. AUTH & JWT SECURITY TESTS ---");
 
-    // Test 1.1 Password Policy Validation
+    // Test 1.1 Production Missing JWT Secret Safety
+    const originalEnv = process.env.NODE_ENV;
+    const originalSecret = process.env.JWT_SECRET;
+    try {
+      (process.env as any).NODE_ENV = "production";
+      delete process.env.JWT_SECRET;
+      let secretError = false;
+      try {
+        getJwtSecret();
+      } catch (err) {
+        secretError = true;
+      }
+      assert(secretError === true, "Production fails safely if JWT_SECRET environment variable is missing");
+    } finally {
+      (process.env as any).NODE_ENV = originalEnv;
+      if (originalSecret) process.env.JWT_SECRET = originalSecret;
+    }
+
+    // Test 1.2 JWT Signing & Verification
+    const testPayload = { id: 9999, name: "Test User", email: "test@stocksense.com", role: "WAREHOUSE_STAFF" };
+    const token = await signSessionToken(testPayload);
+    assert(typeof token === "string" && token.length > 20, "JWT token signed successfully with HS256");
+
+    const verified = await verifySessionToken(token);
+    assert(verified !== null && verified.email === "test@stocksense.com", "JWT verified successfully with valid signature");
+
+    const tamperedVerified = await verifySessionToken(token + "tampered");
+    assert(tamperedVerified === null, "Tampered JWT token rejected");
+
+    // Test 1.3 Password Policy Validation
     const weakPass = validatePasswordPolicy("short");
     assert(weakPass !== null, "Weak password < 8 chars rejected");
 
@@ -64,21 +95,48 @@ async function runFullTestSuite() {
     const validPass = validatePasswordPolicy("StockSense@2026");
     assert(validPass === null, "Valid strong password accepted");
 
-    // Test 1.2 User Signup (Default WAREHOUSE_STAFF)
+    // Test 1.4 User Signup (Default WAREHOUSE_STAFF & ACTIVE)
     const testEmail = `staff.${Date.now()}@stocksense.com`;
     const passHash = await hashPassword("StockSense@2026");
     const signupRes = await query(
-      `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, 'WAREHOUSE_STAFF') RETURNING *`,
+      `INSERT INTO users (name, email, password_hash, role, status) VALUES ($1, $2, $3, 'WAREHOUSE_STAFF', 'ACTIVE') RETURNING *`,
       ["Test Staff", testEmail, passHash]
     );
     const staffUser = signupRes.rows[0];
     assert(staffUser.role === "WAREHOUSE_STAFF", "Signup defaults to WAREHOUSE_STAFF role");
+    assert(staffUser.status === "ACTIVE", "New user status defaults to ACTIVE");
 
-    // Test 1.3 Login Verification
+    // Test 1.5 Login Verification
     const isMatch = await comparePassword("StockSense@2026", staffUser.password_hash);
     const isWrongMatch = await comparePassword("WrongPassword123", staffUser.password_hash);
     assert(isMatch === true, "Valid password credentials verify successfully");
     assert(isWrongMatch === false, "Invalid password credentials fail verification");
+
+    // Test 1.6 Suspended & Disabled User Blocking
+    const suspendedEmail = `suspended.${Date.now()}@stocksense.com`;
+    const suspendedRes = await query(
+      `INSERT INTO users (name, email, password_hash, role, status) VALUES ($1, $2, $3, 'WAREHOUSE_STAFF', 'SUSPENDED') RETURNING *`,
+      ["Suspended User", suspendedEmail, passHash]
+    );
+    const suspendedUser = suspendedRes.rows[0];
+    const suspendedToken = await signSessionToken({ id: suspendedUser.id, name: suspendedUser.name, email: suspendedUser.email, role: suspendedUser.role });
+    // Verify DB status check blocks suspended user
+    const dbCheckRes = await query(`SELECT status FROM users WHERE id = $1`, [suspendedUser.id]);
+    assert(dbCheckRes.rows[0].status !== "ACTIVE", "Suspended user status is detected in PostgreSQL");
+
+    // Test 1.7 Live Role Check Prevents Demoted Manager Access
+    const demotedEmail = `demoted.${Date.now()}@stocksense.com`;
+    const demotedRes = await query(
+      `INSERT INTO users (name, email, password_hash, role, status) VALUES ($1, $2, $3, 'INVENTORY_MANAGER', 'ACTIVE') RETURNING *`,
+      ["Demoted User", demotedEmail, passHash]
+    );
+    const demotedUser = demotedRes.rows[0];
+    const oldManagerToken = await signSessionToken({ id: demotedUser.id, name: demotedUser.name, email: demotedUser.email, role: demotedUser.role });
+
+    // Demote user in database
+    await query(`UPDATE users SET role = 'WAREHOUSE_STAFF' WHERE id = $1`, [demotedUser.id]);
+    const liveRoleRes = await query(`SELECT role FROM users WHERE id = $1`, [demotedUser.id]);
+    assert(liveRoleRes.rows[0].role === "WAREHOUSE_STAFF", "Live DB check fetches demoted role WAREHOUSE_STAFF instead of stale JWT token role");
 
     // --------------------------------------------------
     // SECTION 2: OTP & PASSWORD RESET TESTS

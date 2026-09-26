@@ -7,6 +7,7 @@ import { getNextDocumentNumber } from "@/lib/sequence";
 export async function GET(request: Request) {
   try {
     await initDatabase();
+    await requireAuth();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
@@ -42,6 +43,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ receipts });
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

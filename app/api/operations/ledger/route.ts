@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
+import { requireAuth, handleAuthError } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
     await initDatabase();
+    await requireAuth();
     const { searchParams } = new URL(request.url);
 
     const productId = searchParams.get("product_id");
@@ -119,6 +121,8 @@ export async function GET(request: Request) {
       },
     });
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to fetch stock ledger" }, { status: 500 });
   }
 }

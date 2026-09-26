@@ -36,8 +36,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    if (user.status === "INACTIVE") {
-      return NextResponse.json({ error: "Account deactivated. Contact system administrator." }, { status: 403 });
+    if (user.status && user.status !== "ACTIVE") {
+      return NextResponse.json(
+        { error: `Account ${user.status.toLowerCase()}. Contact system administrator.` },
+        { status: 403 }
+      );
     }
 
     const userPayload = {

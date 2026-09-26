@@ -2,13 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { query } from "./db";
 
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("SECURITY WARNING: JWT_SECRET environment variable is missing in production!");
+export function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    if (!secret || secret.trim() === "") {
+      throw new Error("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is missing in production!");
+    }
+    return new TextEncoder().encode(secret);
+  }
+  return new TextEncoder().encode(secret || "stocksense_super_secret_jwt_key_2026_dev_fallback");
 }
 
-const JWT_SECRET_STRING = process.env.JWT_SECRET || "stocksense_super_secret_jwt_key_2026_dev_fallback";
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING);
 const COOKIE_NAME = "stocksense_session";
 
 export interface UserPayload {
@@ -31,12 +37,12 @@ export async function signSessionToken(payload: UserPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifySessionToken(token: string): Promise<UserPayload | null> {
   try {
-    const verified = await jwtVerify(token, JWT_SECRET);
+    const verified = await jwtVerify(token, getJwtSecret());
     return verified.payload as unknown as UserPayload;
   } catch (err) {
     return null;
@@ -48,7 +54,30 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;
-    return await verifySessionToken(token);
+
+    const verified = await verifySessionToken(token);
+    if (!verified || !verified.id) return null;
+
+    // Verify current user status and live role directly from PostgreSQL
+    const res = await query(
+      `SELECT id, name, email, role, status FROM users WHERE id = $1`,
+      [verified.id]
+    );
+
+    if (res.rows.length === 0) return null;
+    const dbUser = res.rows[0];
+
+    // Block suspended, disabled, or inactive users from performing protected operations
+    if (dbUser.status && dbUser.status !== "ACTIVE") {
+      return null;
+    }
+
+    return {
+      id: dbUser.id,
+      name: dbUser.name,
+      email: dbUser.email,
+      role: dbUser.role, // Live role from DB prevents demoted JWT vulnerability
+    };
   } catch (err) {
     return null;
   }

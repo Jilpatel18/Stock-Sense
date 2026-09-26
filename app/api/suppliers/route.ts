@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { requireManager, handleAuthError } from "@/lib/auth";
+import { requireManager, requireAuth, handleAuthError } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 
 export async function GET(request: Request) {
   try {
     await initDatabase();
+    await requireAuth();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const includeInactive = searchParams.get("include_inactive") === "true";
@@ -33,6 +34,8 @@ export async function GET(request: Request) {
     const res = await query(sql, params);
     return NextResponse.json({ suppliers: res.rows });
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to fetch suppliers" }, { status: 500 });
   }
 }

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { requireManager, handleAuthError } from "@/lib/auth";
+import { requireManager, requireAuth, handleAuthError } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     await initDatabase();
+    await requireAuth();
     const params = await props.params;
     const id = parseInt(params.id);
 
@@ -64,6 +65,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     return NextResponse.json({ product });
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to fetch product" }, { status: 500 });
   }
 }
