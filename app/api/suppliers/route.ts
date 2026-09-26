@@ -137,12 +137,17 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: "Supplier ID is required" }, { status: 400 });
 
-    // Check if supplier is referenced in receipts
-    const recCount = await query(`SELECT COUNT(*) FROM receipts WHERE supplier_id = $1`, [id]);
-    const count = parseInt(recCount.rows[0].count);
-
-    if (count > 0) {
-      // Soft deactivate
+    try {
+      await query(`DELETE FROM suppliers WHERE id = $1`, [id]);
+      await logAuditEvent({
+        userId: user.id,
+        userEmail: user.email,
+        action: "SUPPLIER_DELETE",
+        entityType: "SUPPLIER",
+        entityId: parseInt(id),
+      });
+      return NextResponse.json({ success: true, message: "Supplier permanently deleted." });
+    } catch {
       await query(`UPDATE suppliers SET active = FALSE WHERE id = $1`, [id]);
       await logAuditEvent({
         userId: user.id,
@@ -153,18 +158,8 @@ export async function DELETE(request: Request) {
       });
       return NextResponse.json({
         success: true,
-        message: `Supplier deactivated (referenced by ${count} historical receipts). Historical data preserved.`,
+        message: "Supplier deactivated. Historical transaction records preserved.",
       });
-    } else {
-      await query(`DELETE FROM suppliers WHERE id = $1`, [id]);
-      await logAuditEvent({
-        userId: user.id,
-        userEmail: user.email,
-        action: "SUPPLIER_DELETE",
-        entityType: "SUPPLIER",
-        entityId: parseInt(id),
-      });
-      return NextResponse.json({ success: true, message: "Supplier deleted successfully." });
     }
   } catch (err: any) {
     const authErr = handleAuthError(err);

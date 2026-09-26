@@ -23,6 +23,7 @@ import {
   Edit2,
   Settings,
   ShieldAlert,
+  Search,
 } from "lucide-react";
 
 interface UserType {
@@ -71,6 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [searchResults, setSearchResults] = useState<any>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUser = async () => {
     try {
@@ -106,6 +108,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowUserDropdown(false);
+        setShowSearchDropdown(false);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -277,8 +284,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Global Search Bar */}
         <div className="relative flex-1 max-w-md hidden sm:block">
-          <div className="relative">
+          <div className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 pointer-events-none" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -286,14 +295,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
               }}
               placeholder="Search inventory (Product, SKU, Warehouse)..."
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 pl-3 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400"
+              className="w-full bg-zinc-50/90 border border-zinc-200/90 rounded-xl text-xs text-zinc-950 pl-8.5 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400 font-medium transition-colors"
             />
             {searchLoading ? (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 font-mono animate-pulse">
+              <span className="absolute right-3 text-[10px] text-zinc-400 font-mono animate-pulse">
                 ...
               </span>
             ) : (
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-zinc-200/80 text-zinc-600 font-mono text-[10px] font-extrabold pointer-events-none border border-zinc-300/60">
+              <span className="absolute right-2.5 px-1.5 py-0.5 rounded bg-zinc-200/70 text-zinc-600 font-mono text-[10px] font-extrabold pointer-events-none border border-zinc-300/50">
                 ⌘K
               </span>
             )}

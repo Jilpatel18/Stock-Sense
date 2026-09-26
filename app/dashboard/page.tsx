@@ -353,7 +353,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Grid: Inventory Health & Stock by Warehouse */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Section 2: INVENTORY HEALTH */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
@@ -374,12 +374,12 @@ export default function DashboardPage() {
               />
               <div
                 style={{ width: `${health.lowStockPercent}%` }}
-                className="bg-zinc-500 h-full transition-all duration-500"
+                className="bg-amber-500 h-full transition-all duration-500"
                 title={`Low Stock: ${health.lowStockPercent}%`}
               />
               <div
                 style={{ width: `${health.outOfStockPercent}%` }}
-                className="bg-zinc-300 h-full rounded-r-lg transition-all duration-500"
+                className="bg-rose-500 h-full rounded-r-lg transition-all duration-500"
                 title={`Out of Stock: ${health.outOfStockPercent}%`}
               />
             </div>
@@ -391,16 +391,24 @@ export default function DashboardPage() {
                 <span className="text-xl font-extrabold text-zinc-950">{health.healthyPercent}%</span>
                 <span className="text-[10px] text-zinc-400 block font-mono">({health.healthyCount} SKUs)</span>
               </div>
-              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Low Stock</span>
-                <span className="text-xl font-extrabold text-zinc-950">{health.lowStockPercent}%</span>
-                <span className="text-[10px] text-zinc-400 block font-mono">({health.lowStockCount} SKUs)</span>
+              <div className="p-3 bg-amber-50/40 border border-amber-200/80 rounded-xl">
+                <span className="text-[10px] text-amber-800 uppercase font-bold block">Low Stock</span>
+                <span className="text-xl font-extrabold text-amber-900">{health.lowStockPercent}%</span>
+                <span className="text-[10px] text-amber-700/80 block font-mono">({health.lowStockCount} SKUs)</span>
               </div>
-              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold block">Out of Stock</span>
-                <span className="text-xl font-extrabold text-zinc-950">{health.outOfStockPercent}%</span>
-                <span className="text-[10px] text-zinc-400 block font-mono">({health.outOfStockCount} SKUs)</span>
+              <div className="p-3 bg-rose-50/40 border border-rose-200/80 rounded-xl">
+                <span className="text-[10px] text-rose-700 uppercase font-bold block">Out of Stock</span>
+                <span className="text-xl font-extrabold text-rose-800">{health.outOfStockPercent}%</span>
+                <span className="text-[10px] text-rose-600/80 block font-mono">({health.outOfStockCount} SKUs)</span>
               </div>
+            </div>
+
+            {/* Quick Status Summary Row */}
+            <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-600">
+              <span className="font-medium">Master SKU Tracking Status</span>
+              <span className="font-mono font-bold text-zinc-900">
+                {health.healthyCount} / {kpis.totalSkus || 1} Operational
+              </span>
             </div>
           </div>
         </div>
@@ -415,7 +423,7 @@ export default function DashboardPage() {
             <span className="text-[10px] font-mono text-zinc-500 uppercase">Live Location Sum</span>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
             {stats?.stockByWarehouse?.length === 0 ? (
               <p className="text-xs text-zinc-500 py-4 text-center">No warehouses initialized yet.</p>
             ) : (
@@ -423,18 +431,18 @@ export default function DashboardPage() {
                 const totalInv = parseFloat(wh.total_inventory);
                 const percentOfTotal = kpis.totalStock > 0 ? Math.round((totalInv / kpis.totalStock) * 100) : 0;
                 return (
-                  <div key={wh.id} className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1.5">
+                  <div key={wh.id} className="p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
                     <div className="flex justify-between items-center text-xs">
                       <div>
                         <span className="font-bold text-zinc-950">{wh.name}</span>
-                        <span className="font-mono text-[10px] text-zinc-500 ml-2">({wh.code})</span>
+                        <span className="font-mono text-[10px] text-zinc-500 ml-1.5">({wh.code})</span>
                       </div>
                       <span className="font-mono font-extrabold text-zinc-950">
                         {totalInv.toLocaleString()} <span className="text-[10px] text-zinc-500 font-normal">units</span>
                       </span>
                     </div>
                     {/* Visual Bar */}
-                    <div className="w-full bg-zinc-200 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-black h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
                     </div>
                   </div>

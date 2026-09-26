@@ -165,11 +165,17 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: "Location ID is required" }, { status: 400 });
 
-    // Check stock or ledger history
-    const checkStock = await query(`SELECT COUNT(*) FROM inventory WHERE location_id = $1 AND quantity > 0`, [id]);
-    const hasStock = parseInt(checkStock.rows[0].count) > 0;
-
-    if (hasStock) {
+    try {
+      await query(`DELETE FROM locations WHERE id = $1`, [id]);
+      await logAuditEvent({
+        userId: user.id,
+        userEmail: user.email,
+        action: "LOCATION_DELETE",
+        entityType: "LOCATION",
+        entityId: parseInt(id),
+      });
+      return NextResponse.json({ success: true, message: "Location permanently deleted." });
+    } catch {
       await query(`UPDATE locations SET active = FALSE WHERE id = $1`, [id]);
       await logAuditEvent({
         userId: user.id,
@@ -180,18 +186,8 @@ export async function DELETE(request: Request) {
       });
       return NextResponse.json({
         success: true,
-        message: "Location deactivated (contains active stock). Historical records preserved.",
+        message: "Location deactivated. Historical stock ledger & inventory records preserved.",
       });
-    } else {
-      await query(`UPDATE locations SET active = FALSE WHERE id = $1`, [id]);
-      await logAuditEvent({
-        userId: user.id,
-        userEmail: user.email,
-        action: "LOCATION_DEACTIVATE",
-        entityType: "LOCATION",
-        entityId: parseInt(id),
-      });
-      return NextResponse.json({ success: true, message: "Location deactivated." });
     }
   } catch (err: any) {
     const authErr = handleAuthError(err);

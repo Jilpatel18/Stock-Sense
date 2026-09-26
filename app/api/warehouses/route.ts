@@ -143,17 +143,17 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: "Warehouse ID is required" }, { status: 400 });
 
-    // Check stock ledger references or inventory for locations under this warehouse
-    const checkStock = await query(
-      `SELECT COUNT(*) FROM inventory i
-       JOIN locations l ON i.location_id = l.id
-       WHERE l.warehouse_id = $1 AND i.quantity > 0`,
-      [id]
-    );
-    const hasStock = parseInt(checkStock.rows[0].count) > 0;
-
-    if (hasStock) {
-      // Soft deactivate
+    try {
+      await query(`DELETE FROM warehouses WHERE id = $1`, [id]);
+      await logAuditEvent({
+        userId: user.id,
+        userEmail: user.email,
+        action: "WAREHOUSE_DELETE",
+        entityType: "WAREHOUSE",
+        entityId: parseInt(id),
+      });
+      return NextResponse.json({ success: true, message: "Warehouse permanently deleted." });
+    } catch {
       await query(`UPDATE warehouses SET active = FALSE WHERE id = $1`, [id]);
       await logAuditEvent({
         userId: user.id,
@@ -164,18 +164,8 @@ export async function DELETE(request: Request) {
       });
       return NextResponse.json({
         success: true,
-        message: "Warehouse deactivated (contains active stock). Historical records preserved.",
+        message: "Warehouse deactivated. Location & inventory history preserved.",
       });
-    } else {
-      await query(`UPDATE warehouses SET active = FALSE WHERE id = $1`, [id]);
-      await logAuditEvent({
-        userId: user.id,
-        userEmail: user.email,
-        action: "WAREHOUSE_DEACTIVATE",
-        entityType: "WAREHOUSE",
-        entityId: parseInt(id),
-      });
-      return NextResponse.json({ success: true, message: "Warehouse deactivated." });
     }
   } catch (err: any) {
     const authErr = handleAuthError(err);

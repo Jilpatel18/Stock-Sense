@@ -127,12 +127,17 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
 
-    // Check if category is referenced by products
-    const prodCount = await query(`SELECT COUNT(*) FROM products WHERE category_id = $1`, [id]);
-    const count = parseInt(prodCount.rows[0].count);
-
-    if (count > 0) {
-      // Soft deactivate
+    try {
+      await query(`DELETE FROM categories WHERE id = $1`, [id]);
+      await logAuditEvent({
+        userId: user.id,
+        userEmail: user.email,
+        action: "CATEGORY_DELETE",
+        entityType: "CATEGORY",
+        entityId: parseInt(id),
+      });
+      return NextResponse.json({ success: true, message: "Category permanently deleted." });
+    } catch {
       await query(`UPDATE categories SET active = FALSE WHERE id = $1`, [id]);
       await logAuditEvent({
         userId: user.id,
@@ -143,18 +148,8 @@ export async function DELETE(request: Request) {
       });
       return NextResponse.json({
         success: true,
-        message: `Category deactivated (referenced by ${count} products). Historical data preserved.`,
+        message: "Category deactivated. Historical product references preserved.",
       });
-    } else {
-      await query(`DELETE FROM categories WHERE id = $1`, [id]);
-      await logAuditEvent({
-        userId: user.id,
-        userEmail: user.email,
-        action: "CATEGORY_DELETE",
-        entityType: "CATEGORY",
-        entityId: parseInt(id),
-      });
-      return NextResponse.json({ success: true, message: "Category deleted successfully." });
     }
   } catch (err: any) {
     const authErr = handleAuthError(err);

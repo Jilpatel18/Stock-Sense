@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Shield,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -169,7 +170,36 @@ export default function SettingsPage() {
     return <div className="py-12 text-center text-xs text-zinc-500">Loading settings module...</div>;
   }
 
-  const isManager = currentUser?.role === "INVENTORY_MANAGER";
+  const isManager =
+    currentUser?.role === "INVENTORY_MANAGER" || currentUser?.role === "ADMIN";
+
+  const handleReactivateItem = async (type: "warehouse" | "location" | "category" | "supplier", item: any) => {
+    setError(null);
+    setMessage(null);
+
+    let url = "";
+    if (type === "warehouse") url = "/api/warehouses";
+    else if (type === "location") url = "/api/locations";
+    else if (type === "category") url = "/api/categories";
+    else if (type === "supplier") url = "/api/suppliers";
+
+    try {
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...item, active: true }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage(`${type.toUpperCase()} reactivated successfully.`);
+        loadAllData();
+      } else {
+        setError(data.error || "Failed to reactivate");
+      }
+    } catch {
+      setError("Error reactivating item.");
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -323,16 +353,27 @@ export default function SettingsPage() {
                   </span>
 
                   {isManager && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      {!wh.active && (
+                        <button
+                          onClick={() => handleReactivateItem("warehouse", wh)}
+                          title="Reactivate Warehouse"
+                          className="p-1.5 text-emerald-700 hover:text-emerald-900 rounded-lg hover:bg-emerald-50 transition-colors"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenEdit("warehouse", wh)}
-                        className="p-1.5 text-zinc-600 hover:text-black rounded-lg hover:bg-zinc-100"
+                        title="Edit Warehouse"
+                        className="p-1.5 text-zinc-600 hover:text-black rounded-lg hover:bg-zinc-100 transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteItem("warehouse", wh.id)}
-                        className="p-1.5 text-zinc-400 hover:text-red-600 rounded-lg hover:bg-zinc-100"
+                        title={wh.active ? "Deactivate Warehouse" : "Delete Warehouse"}
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-zinc-100 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
