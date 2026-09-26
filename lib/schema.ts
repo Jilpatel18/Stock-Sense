@@ -227,6 +227,56 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
     `);
 
+    // 17. Password Reset OTPs table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_otps (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        otp_hash TEXT NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        attempts INT NOT NULL DEFAULT 0,
+        is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+        is_used BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_otp_email ON password_reset_otps(email);
+    `);
+
+    // 18. Audit Logs table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE SET NULL,
+        user_email VARCHAR(255),
+        action VARCHAR(100) NOT NULL,
+        entity_type VARCHAR(100),
+        entity_id INT,
+        details JSONB,
+        ip_address VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+    `);
+
+    // 19. Document Sequences table for safe document numbering
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS document_sequences (
+        prefix VARCHAR(10) PRIMARY KEY,
+        last_val INT NOT NULL DEFAULT 0
+      );
+    `);
+
+    // Ensure active columns exist on relevant tables for soft deactivation
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE locations ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+    `);
+
     await client.query("COMMIT");
     isInitialized = true;
     console.log("Database initialized successfully.");

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAuth, handleAuthError } from "@/lib/auth";
+import { getNextDocumentNumber } from "@/lib/sequence";
 
 export async function GET(request: Request) {
   try {
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await initDatabase();
-    const user = await getCurrentUser();
+    const user = await requireAuth();
     const body = await request.json();
     const { source_location_id, destination_location_id, status, items } = body;
 
@@ -73,10 +74,8 @@ export async function POST(request: Request) {
     try {
       await client.query("BEGIN");
 
-      // Generate transfer number (TRN-00001)
-      const countRes = await client.query(`SELECT COUNT(*) FROM internal_transfers`);
-      const nextNum = parseInt(countRes.rows[0].count) + 1;
-      const transferNumber = `TRN-${String(nextNum).padStart(5, "0")}`;
+      // Generate atomic transfer number (TRF-000001)
+      const transferNumber = await getNextDocumentNumber(client, "TRF");
 
       const trnRes = await client.query(
         `INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by)
@@ -86,7 +85,7 @@ export async function POST(request: Request) {
           parseInt(source_location_id),
           parseInt(destination_location_id),
           status || "Draft",
-          user?.id || null,
+          user.id,
         ]
       );
 
@@ -112,6 +111,8 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to create transfer" }, { status: 500 });
   }
 }

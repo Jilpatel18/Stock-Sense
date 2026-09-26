@@ -2,15 +2,20 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function POST(request: Request) {
   try {
     await initDatabase();
     const body = await request.json();
-    const { name, email, password, role } = body;
+    const { name, email, password } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters long" }, { status: 400 });
     }
 
     const existing = await query(`SELECT id FROM users WHERE email = $1`, [email]);
@@ -18,7 +23,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "An account with this email already exists." }, { status: 400 });
     }
 
-    const userRole = role === "INVENTORY_MANAGER" ? "INVENTORY_MANAGER" : "WAREHOUSE_STAFF";
+    // Public signup ALWAYS defaults to WAREHOUSE_STAFF (Server-side RBAC protection)
+    const userRole = "WAREHOUSE_STAFF";
     const passwordHash = await hashPassword(password);
 
     const res = await query(
@@ -37,6 +43,12 @@ export async function POST(request: Request) {
     };
 
     await setSessionCookie(userPayload);
+    await logAuditEvent({
+      userId: user.id,
+      userEmail: user.email,
+      action: "USER_SIGNUP",
+      details: { role: user.role },
+    });
 
     return NextResponse.json({ success: true, user: userPayload });
   } catch (err: any) {

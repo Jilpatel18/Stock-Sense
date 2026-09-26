@@ -1,10 +1,14 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "stocksense_super_secret_jwt_key_2026_safe_fallback"
-);
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.warn("WARNING: JWT_SECRET environment variable is missing in production!");
+}
+
+const JWT_SECRET_STRING = process.env.JWT_SECRET || "stocksense_super_secret_jwt_key_2026_safe_fallback";
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING);
 const COOKIE_NAME = "stocksense_session";
 
 export interface UserPayload {
@@ -48,6 +52,40 @@ export async function getCurrentUser(): Promise<UserPayload | null> {
   } catch (err) {
     return null;
   }
+}
+
+export async function requireAuth(): Promise<UserPayload> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("UNAUTHENTICATED");
+  }
+  return user;
+}
+
+export async function requireManager(): Promise<UserPayload> {
+  const user = await requireAuth();
+  if (user.role !== "INVENTORY_MANAGER") {
+    throw new Error("UNAUTHORIZED");
+  }
+  return user;
+}
+
+export async function requireRole(allowedRoles: string[]): Promise<UserPayload> {
+  const user = await requireAuth();
+  if (!allowedRoles.includes(user.role)) {
+    throw new Error("UNAUTHORIZED");
+  }
+  return user;
+}
+
+export function handleAuthError(err: any): NextResponse | null {
+  if (err?.message === "UNAUTHENTICATED") {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+  if (err?.message === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Access denied. Insufficient permissions." }, { status: 403 });
+  }
+  return null;
 }
 
 export async function setSessionCookie(user: UserPayload) {

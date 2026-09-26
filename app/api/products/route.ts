@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { requireManager, handleAuthError } from "@/lib/auth";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +10,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("category_id");
     const search = searchParams.get("search");
+    const warehouseId = searchParams.get("warehouse_id");
+    const locationId = searchParams.get("location_id");
+    const statusFilter = searchParams.get("status"); // 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NORMAL'
+    const includeInactive = searchParams.get("include_inactive") === "true";
 
     let sql = `
       SELECT p.*, c.name as category_name,
@@ -16,18 +21,34 @@ export async function GET(request: Request) {
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN inventory i ON p.id = i.product_id
+      LEFT JOIN locations l ON i.location_id = l.id
     `;
     const params: any[] = [];
     const conditions: string[] = [];
 
+    if (!includeInactive) {
+      conditions.push(`p.active = TRUE`);
+    }
+
     if (categoryId) {
-      params.push(categoryId);
+      params.push(parseInt(categoryId));
       conditions.push(`p.category_id = $${params.length}`);
+    }
+
+    if (warehouseId) {
+      params.push(parseInt(warehouseId));
+      conditions.push(`l.warehouse_id = $${params.length}`);
+    }
+
+    if (locationId) {
+      params.push(parseInt(locationId));
+      conditions.push(`i.location_id = $${params.length}`);
     }
 
     if (search) {
       params.push(`%${search}%`);
-      conditions.push(`(p.name ILIKE $${params.length} OR p.sku ILIKE $${params.length})`);
+      const p = `$${params.length}`;
+      conditions.push(`(p.name ILIKE ${p} OR p.sku ILIKE ${p})`);
     }
 
     if (conditions.length > 0) {
@@ -37,7 +58,32 @@ export async function GET(request: Request) {
     sql += ` GROUP BY p.id, c.name ORDER BY p.name ASC`;
 
     const res = await query(sql, params);
-    const products = res.rows;
+    let products = res.rows;
+
+    // Process calculations and per-location breakdown
+    products = products.map((prod) => {
+      const totalStock = parseFloat(prod.total_stock);
+      const reorderLevel = parseFloat(prod.reorder_level);
+
+      let stockStatus = "NORMAL";
+      if (totalStock === 0) {
+        stockStatus = "OUT_OF_STOCK";
+      } else if (totalStock <= reorderLevel) {
+        stockStatus = "LOW_STOCK";
+      }
+
+      return {
+        ...prod,
+        total_stock: totalStock,
+        reorder_level: reorderLevel,
+        is_low_stock: totalStock <= reorderLevel,
+        stock_status: stockStatus,
+      };
+    });
+
+    if (statusFilter) {
+      products = products.filter((p) => p.stock_status === statusFilter);
+    }
 
     // Attach per-location breakdown for each product
     for (const prod of products) {
@@ -50,9 +96,6 @@ export async function GET(request: Request) {
         [prod.id]
       );
       prod.locations = locRes.rows;
-      prod.total_stock = parseFloat(prod.total_stock);
-      prod.reorder_level = parseFloat(prod.reorder_level);
-      prod.is_low_stock = prod.total_stock <= prod.reorder_level;
     }
 
     return NextResponse.json({ products });
@@ -64,33 +107,38 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await initDatabase();
-    const user = await getCurrentUser();
+    const user = await requireManager();
     const body = await request.json();
     const { name, sku, category_id, unit_of_measure, reorder_level, initial_stock, location_id } = body;
 
-    if (!name || !sku) {
-      return NextResponse.json({ error: "Product name and SKU are required" }, { status: 400 });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
     }
+    if (!sku || typeof sku !== "string" || !sku.trim()) {
+      return NextResponse.json({ error: "Product SKU is required" }, { status: 400 });
+    }
+
+    const trimmedSku = sku.trim().toUpperCase();
 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
       // Check SKU uniqueness
-      const skuCheck = await client.query(`SELECT id FROM products WHERE sku = $1`, [sku]);
+      const skuCheck = await client.query(`SELECT id FROM products WHERE UPPER(sku) = $1`, [trimmedSku]);
       if (skuCheck.rows.length > 0) {
-        throw new Error(`Product with SKU "${sku}" already exists.`);
+        throw new Error(`Product with SKU "${trimmedSku}" already exists.`);
       }
 
       const prodRes = await client.query(
-        `INSERT INTO products (name, sku, category_id, unit_of_measure, reorder_level)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO products (name, sku, category_id, unit_of_measure, reorder_level, active)
+         VALUES ($1, $2, $3, $4, $5, TRUE)
          RETURNING *`,
         [
-          name,
-          sku,
+          name.trim(),
+          trimmedSku,
           category_id ? parseInt(category_id) : null,
-          unit_of_measure || "PCS",
+          unit_of_measure ? unit_of_measure.trim() : "PCS",
           reorder_level ? parseFloat(reorder_level) : 10,
         ]
       );
@@ -111,11 +159,21 @@ export async function POST(request: Request) {
           `INSERT INTO stock_ledger 
            (product_id, location_id, operation_type, reference_type, reference_id, reference_number, quantity_before, quantity_change, quantity_after, performed_by, created_at)
            VALUES ($1, $2, 'RECEIPT', 'INITIAL_STOCK', $3, 'INIT-STOCK', 0, $4, $4, $5, NOW())`,
-          [newProd.id, locId, newProd.id, qty, user?.id || null]
+          [newProd.id, locId, newProd.id, qty, user.id]
         );
       }
 
       await client.query("COMMIT");
+
+      await logAuditEvent({
+        userId: user.id,
+        userEmail: user.email,
+        action: "PRODUCT_CREATE",
+        entityType: "PRODUCT",
+        entityId: newProd.id,
+        details: { name: newProd.name, sku: newProd.sku },
+      });
+
       return NextResponse.json({ success: true, product: newProd });
     } catch (err: any) {
       await client.query("ROLLBACK");
@@ -124,6 +182,8 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to create product" }, { status: 500 });
   }
 }

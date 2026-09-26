@@ -19,6 +19,8 @@ import {
   ChevronDown,
   Menu,
   X,
+  Settings,
+  ShieldAlert,
 } from "lucide-react";
 
 interface UserType {
@@ -107,6 +109,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const secondaryItems = [
     { name: "Warehouses & Locations", href: "/warehouses", icon: Warehouse },
+    { name: "Settings Module", href: "/settings", icon: Settings },
+    { name: "Security Audit Log", href: "/audit-logs", icon: ShieldAlert },
     { name: "My Profile", href: "/profile", icon: User },
   ];
 

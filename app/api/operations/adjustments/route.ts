@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAuth, handleAuthError } from "@/lib/auth";
+import { getNextDocumentNumber } from "@/lib/sequence";
 
 export async function GET(request: Request) {
   try {
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await initDatabase();
-    const user = await getCurrentUser();
+    const user = await requireAuth();
     const body = await request.json();
     const { location_id, reason, status, items } = body;
 
@@ -61,17 +62,15 @@ export async function POST(request: Request) {
     try {
       await client.query("BEGIN");
 
-      // Generate adjustment number (ADJ-00001)
-      const countRes = await client.query(`SELECT COUNT(*) FROM inventory_adjustments`);
-      const nextNum = parseInt(countRes.rows[0].count) + 1;
-      const adjustmentNumber = `ADJ-${String(nextNum).padStart(5, "0")}`;
+      // Generate atomic adjustment number (ADJ-000001)
+      const adjustmentNumber = await getNextDocumentNumber(client, "ADJ");
 
       const locId = parseInt(location_id);
 
       const adjRes = await client.query(
         `INSERT INTO inventory_adjustments (adjustment_number, location_id, reason, status, created_by)
          VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [adjustmentNumber, locId, reason || null, status || "Draft", user?.id || null]
+        [adjustmentNumber, locId, reason || null, status || "Draft", user.id]
       );
 
       const adjustment = adjRes.rows[0];
@@ -108,6 +107,8 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to create adjustment" }, { status: 500 });
   }
 }

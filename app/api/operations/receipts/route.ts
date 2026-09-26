@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAuth, handleAuthError } from "@/lib/auth";
+import { getNextDocumentNumber } from "@/lib/sequence";
 
 export async function GET(request: Request) {
   try {
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await initDatabase();
-    const user = await getCurrentUser();
+    const user = await requireAuth();
     const body = await request.json();
     const { supplier_id, destination_location_id, status, items } = body;
 
@@ -63,10 +64,8 @@ export async function POST(request: Request) {
     try {
       await client.query("BEGIN");
 
-      // Generate receipt number (REC-00001)
-      const countRes = await client.query(`SELECT COUNT(*) FROM receipts`);
-      const nextNum = parseInt(countRes.rows[0].count) + 1;
-      const receiptNumber = `REC-${String(nextNum).padStart(5, "0")}`;
+      // Generate atomic sequence receipt number (REC-000001)
+      const receiptNumber = await getNextDocumentNumber(client, "REC");
 
       const recStatus = status || "Draft";
 
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
           supplier_id ? parseInt(supplier_id) : null,
           parseInt(destination_location_id),
           recStatus,
-          user?.id || null,
+          user.id,
         ]
       );
 
@@ -104,6 +103,8 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to create receipt" }, { status: 500 });
   }
 }

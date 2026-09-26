@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { query, pool } from "@/lib/db";
 import { initDatabase } from "@/lib/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAuth, handleAuthError } from "@/lib/auth";
+import { getNextDocumentNumber } from "@/lib/sequence";
 
 export async function GET(request: Request) {
   try {
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await initDatabase();
-    const user = await getCurrentUser();
+    const user = await requireAuth();
     const body = await request.json();
     const { source_location_id, customer_name, status, items } = body;
 
@@ -61,10 +62,8 @@ export async function POST(request: Request) {
     try {
       await client.query("BEGIN");
 
-      // Generate delivery number (DEL-00001)
-      const countRes = await client.query(`SELECT COUNT(*) FROM delivery_orders`);
-      const nextNum = parseInt(countRes.rows[0].count) + 1;
-      const deliveryNumber = `DEL-${String(nextNum).padStart(5, "0")}`;
+      // Generate atomic delivery number (DEL-000001)
+      const deliveryNumber = await getNextDocumentNumber(client, "DEL");
 
       const delRes = await client.query(
         `INSERT INTO delivery_orders (delivery_number, source_location_id, customer_name, status, created_by)
@@ -74,7 +73,7 @@ export async function POST(request: Request) {
           parseInt(source_location_id),
           customer_name || null,
           status || "Draft",
-          user?.id || null,
+          user.id,
         ]
       );
 
@@ -100,6 +99,8 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (err: any) {
+    const authErr = handleAuthError(err);
+    if (authErr) return authErr;
     return NextResponse.json({ error: err.message || "Failed to create delivery" }, { status: 500 });
   }
 }
