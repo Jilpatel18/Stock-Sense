@@ -355,6 +355,66 @@ async function runFullTestSuite() {
     const loc2PostAdj = await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [prodId, loc2Id]);
     assert(parseFloat(loc2PostAdj.rows[0].quantity) === 85, "Adjustment reconciles stock to physical count (85)");
 
+    // Test 3.7 REQUIREMENT #11 EXACT MULTI-STEP TEST SCENARIO
+    console.log("\n--- Executing Requirement #11 Multi-Step Test Scenario ---");
+    const p11ProdRes = await query(
+      `INSERT INTO products (name, sku, unit_of_measure, reorder_level) VALUES ('Raw Sugar', $1, 'KG', 10) RETURNING id`,
+      [`SKU-SUGAR-${Date.now()}`]
+    );
+    const sugarId = p11ProdRes.rows[0].id;
+
+    // Step 1: Receipt +100 KG to LocA
+    const rec11No = await getNextDocumentNumber(client, "REC");
+    const rec11 = (await query(`INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [rec11No, loc1Id, managerId])).rows[0];
+    await query(`INSERT INTO receipt_items (receipt_id, product_id, quantity) VALUES ($1, $2, 100)`, [rec11.id, sugarId]);
+    await validateReceipt(rec11.id, managerId);
+    const s1Stock = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
+    assert(s1Stock === 100, "Scenario Step 1: Receipt +100 KG -> Stock = 100 KG");
+
+    // Step 2: Transfer 30 KG from LocA to LocB
+    const trf11No = await getNextDocumentNumber(client, "TRF");
+    const trf11 = (await query(`INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by) VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`, [trf11No, loc1Id, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 30)`, [trf11.id, sugarId]);
+    await validateTransfer(trf11.id, managerId);
+    const s2LocA = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
+    const s2LocB = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc2Id])).rows[0].quantity);
+    assert(s2LocA === 70 && s2LocB === 30, "Scenario Step 2: Transfer 30 KG -> LocA = 70 KG, LocB = 30 KG");
+
+    // Step 3: Delivery 20 KG from LocB
+    const del11No = await getNextDocumentNumber(client, "DEL");
+    const del11 = (await query(`INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [del11No, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 20)`, [del11.id, sugarId]);
+    await validateDelivery(del11.id, managerId);
+    const s3LocB = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc2Id])).rows[0].quantity);
+    assert(s3LocB === 10, "Scenario Step 3: Delivery 20 KG -> LocB = 10 KG");
+
+    // Step 4: Adjustment on LocA: physical = 47 KG (was 70 -> difference = -23)
+    const adj11No = await getNextDocumentNumber(client, "ADJ");
+    const adj11 = (await query(`INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [adj11No, loc1Id, managerId])).rows[0];
+    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 47, 70, -23)`, [adj11.id, sugarId]);
+    await validateAdjustment(adj11.id, managerId);
+    const s4LocA = parseFloat((await query(`SELECT quantity FROM inventory WHERE product_id = $1 AND location_id = $2`, [sugarId, loc1Id])).rows[0].quantity);
+    assert(s4LocA === 47, "Scenario Step 4: Adjustment physical count = 47 KG -> LocA = 47 KG");
+
+    const totalScenarioStock = s4LocA + s3LocB; // 47 + 10 = 57 KG
+    assert(totalScenarioStock === 57, "Requirement #11 Final Math: 100 - 30 - 20 (at LocB) + Adjustment to 47 (at LocA) = 57 KG Total");
+
+    // Test 3.8 Document Sequence Format & Concurrency
+    const seqRec = await getNextDocumentNumber(client, "REC");
+    const seqDel = await getNextDocumentNumber(client, "DEL");
+    const seqTrf = await getNextDocumentNumber(client, "TRF");
+    const seqAdj = await getNextDocumentNumber(client, "ADJ");
+    assert(/^REC-\d{6}$/.test(seqRec), "Receipt sequence format matches REC-000001");
+    assert(/^DEL-\d{6}$/.test(seqDel), "Delivery sequence format matches DEL-000001");
+    assert(/^TRF-\d{6}$/.test(seqTrf), "Transfer sequence format matches TRF-000001");
+    assert(/^ADJ-\d{6}$/.test(seqAdj), "Adjustment sequence format matches ADJ-000001");
+
+    // Test 3.9 Concurrent Document Sequence Generation (No Duplicates)
+    const seqPromises = Array.from({ length: 10 }, () => getNextDocumentNumber(null, "REC"));
+    const generatedSeqs = await Promise.all(seqPromises);
+    const uniqueSeqs = new Set(generatedSeqs);
+    assert(uniqueSeqs.size === 10, "Concurrent document sequence generation yields 10 unique, non-duplicate numbers");
+
     console.log("\n==================================================");
     console.log(`TEST SUITE SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
     console.log("==================================================\n");

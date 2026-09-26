@@ -14,6 +14,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   } catch (err: any) {
     const authErr = handleAuthError(err);
     if (authErr) return authErr;
-    return NextResponse.json({ error: err.message || "Failed to validate receipt" }, { status: 400 });
+    const isConflict = err.statusCode === 409 || err.message?.includes("already validated") || err.message?.includes("canceled");
+    return NextResponse.json({ error: err.message || "Failed to validate receipt" }, { status: isConflict ? 409 : 400 });
   }
 }
