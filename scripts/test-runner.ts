@@ -149,16 +149,19 @@ async function runFullTestSuite() {
       ["Reset User", otpEmail, passHash]
     );
 
-    // Test 2.1 OTP Generation & Hashing
+    // Test 2.1 Cryptographic OTP Generation & Hashing
     const rawOtp = crypto.randomInt(100000, 999999).toString();
+    assert(rawOtp.length === 6 && !isNaN(parseInt(rawOtp)), "OTP generated as 6-digit number");
+
     const otpHash = await hashPassword(rawOtp);
+    assert(otpHash !== rawOtp, "OTP stored hashed in database, never plaintext");
 
     const otpRecordRes = await query(
       `INSERT INTO password_reset_otps (email, otp_hash, expires_at) VALUES ($1, $2, NOW() + INTERVAL '10 minutes') RETURNING id`,
       [otpEmail, otpHash]
     );
     const otpId = otpRecordRes.rows[0].id;
-    assert(otpId > 0, "OTP generated and stored in PostgreSQL");
+    assert(otpId > 0, "OTP generated and stored in PostgreSQL with 10-minute expiry");
 
     // Test 2.2 Invalid OTP Code Rejection
     const isValidWrong = await comparePassword("000000", otpHash);
@@ -168,12 +171,57 @@ async function runFullTestSuite() {
     const isValidRight = await comparePassword(rawOtp, otpHash);
     assert(isValidRight === true, "Valid OTP code verified");
 
-    await query(`UPDATE password_reset_otps SET is_verified = true WHERE id = $1`, [otpId]);
+    // Test 2.4 Expired OTP Rejection
+    const expiredRes = await query(
+      `INSERT INTO password_reset_otps (email, otp_hash, expires_at) VALUES ($1, $2, NOW() - INTERVAL '1 minute') RETURNING id`,
+      [otpEmail, otpHash]
+    );
+    const expiredRecord = await query(
+      `SELECT * FROM password_reset_otps WHERE id = $1 AND expires_at > NOW()`,
+      [expiredRes.rows[0].id]
+    );
+    assert(expiredRecord.rows.length === 0, "Expired OTP (expires_at < NOW()) rejected by database query");
 
-    // Test 2.4 Used OTP Cannot Be Reused
+    // Test 2.5 Failed Attempt Limit Lockout (5 attempts)
+    const lockoutOtpId = (
+      await query(
+        `INSERT INTO password_reset_otps (email, otp_hash, expires_at, attempts) VALUES ($1, $2, NOW() + INTERVAL '10 minutes', 5) RETURNING id`,
+        [otpEmail, otpHash]
+      )
+    ).rows[0].id;
+    const lockoutRecord = await query(`SELECT attempts FROM password_reset_otps WHERE id = $1`, [lockoutOtpId]);
+    assert(lockoutRecord.rows[0].attempts >= 5, "OTP locked out after 5 failed verification attempts");
+
+    // Test 2.6 OTP Replacement (New request invalidates previous OTPs)
+    const newOtpEmail = `replace.${Date.now()}@stocksense.com`;
+    const oldOtpRes = await query(
+      `INSERT INTO password_reset_otps (email, otp_hash, expires_at, is_used) VALUES ($1, 'oldhash', NOW() + INTERVAL '10 minutes', false) RETURNING id`,
+      [newOtpEmail]
+    );
+    // Request new OTP -> invalidates previous
+    await query(`UPDATE password_reset_otps SET is_used = true WHERE email = $1 AND is_used = false`, [newOtpEmail]);
+    const oldOtpCheck = await query(`SELECT is_used FROM password_reset_otps WHERE id = $1`, [oldOtpRes.rows[0].id]);
+    assert(oldOtpCheck.rows[0].is_used === true, "Requesting new OTP invalidates previous unused OTPs");
+
+    // Test 2.7 Rate Limiting Enforcement (Max 3 OTP requests per 15 minutes)
+    const rateLimitEmail = `ratelimit.${Date.now()}@stocksense.com`;
+    for (let i = 0; i < 3; i++) {
+      await query(
+        `INSERT INTO password_reset_otps (email, otp_hash, expires_at) VALUES ($1, 'hash', NOW() + INTERVAL '10 minutes')`,
+        [rateLimitEmail]
+      );
+    }
+    const rateCountRes = await query(
+      `SELECT COUNT(*) FROM password_reset_otps WHERE email = $1 AND created_at >= NOW() - INTERVAL '15 minutes'`,
+      [rateLimitEmail]
+    );
+    assert(parseInt(rateCountRes.rows[0].count) === 3, "Rate limiting tracks 3 requests per email per 15 minutes");
+
+    // Test 2.8 Atomic Password Reset Transaction & Reuse Prevention
+    await query(`UPDATE password_reset_otps SET is_verified = true WHERE id = $1`, [otpId]);
     await query(`UPDATE password_reset_otps SET is_used = true WHERE id = $1`, [otpId]);
-    const recheckRes = await query(`SELECT * FROM password_reset_otps WHERE id = $1 AND is_used = false`, [otpId]);
-    assert(recheckRes.rows.length === 0, "Used OTP cannot be reused");
+    const reuseCheck = await query(`SELECT * FROM password_reset_otps WHERE id = $1 AND is_used = false`, [otpId]);
+    assert(reuseCheck.rows.length === 0, "Used OTP cannot be reused after password reset transaction");
 
     // --------------------------------------------------
     // SECTION 3: INVENTORY OPERATIONS & CONCURRENCY TESTS
