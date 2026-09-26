@@ -19,6 +19,8 @@ import {
   ChevronDown,
   Menu,
   X,
+  Tag,
+  Edit2,
   Settings,
   ShieldAlert,
 } from "lucide-react";
@@ -97,6 +99,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Products", href: "/products", icon: Package },
+    { name: "Categories", href: "/categories", icon: Tag },
   ];
 
   const operationsItems = [
@@ -111,7 +114,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Warehouses & Locations", href: "/warehouses", icon: Warehouse },
     { name: "Settings Module", href: "/settings", icon: Settings },
     { name: "Security Audit Log", href: "/audit-logs", icon: ShieldAlert },
-    { name: "My Profile", href: "/profile", icon: User },
   ];
 
   return (
@@ -141,7 +143,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        {/* Action Controls & Profile Pill */}
+        {/* Action Controls */}
         <div className="flex items-center gap-3">
           <button
             onClick={handleSeedData}
@@ -152,34 +154,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Sparkles className={`w-3.5 h-3.5 ${seeding ? "animate-spin" : ""}`} />
             {seeding ? "Seeding..." : "Seed Demo Data"}
           </button>
-
-          {user ? (
-            <div className="flex items-center gap-3 bg-zinc-100 border border-zinc-200 rounded-xl px-3 py-1.5">
-              <div className="w-7 h-7 rounded-full bg-black text-white font-extrabold flex items-center justify-center text-xs uppercase">
-                {user.name.charAt(0)}
-              </div>
-              <div className="hidden md:block text-left text-xs">
-                <p className="font-bold text-black leading-tight">{user.name}</p>
-                <p className="text-[10px] text-zinc-600 font-mono font-medium">
-                  {user.role === "INVENTORY_MANAGER" ? "Inventory Manager" : "Warehouse Staff"}
-                </p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-zinc-500 hover:text-black p-1 rounded-lg hover:bg-zinc-200 transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 transition-colors"
-            >
-              Log In
-            </Link>
-          )}
         </div>
       </header>
 
@@ -259,7 +233,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {/* Management & Profile */}
+            {/* System Nav */}
             <div>
               <p className="px-3 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
                 System
@@ -287,19 +261,52 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Sidebar Footer info */}
-          <div className="p-4 border-t border-zinc-200 bg-white text-[11px] text-zinc-500 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Database</span>
-              <span className="inline-flex items-center gap-1 text-black font-mono font-bold text-[10px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-black"></span>
-                Neon Postgres
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Ledger Status</span>
-              <span className="text-zinc-700 font-mono text-[10px] font-bold">Atomic Audit</span>
-            </div>
+          {/* Sidebar Footer User Card */}
+          <div className="p-3.5 border-t border-zinc-200 bg-white">
+            {user ? (
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3 p-2 rounded-xl bg-zinc-50 border border-zinc-200/80">
+                  <div className="w-8 h-8 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shrink-0">
+                    {user.name ? user.name.charAt(0) : "U"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-xs text-zinc-950 truncate leading-tight">{user.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono font-medium truncate">
+                      {user.role === "INVENTORY_MANAGER" ? "Inventory Manager" : "Warehouse Staff"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 font-bold rounded-lg bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white transition-colors border border-zinc-200/70"
+                    title="Edit Profile"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 font-bold rounded-lg bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white transition-colors border border-zinc-200/70"
+                    title="Logout"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 w-full px-3 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>Log In</span>
+              </Link>
+            )}
           </div>
         </aside>
 
