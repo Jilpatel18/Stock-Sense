@@ -446,15 +446,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Action Controls & Top-Right User Profile Header */}
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={handleSeedData}
-            disabled={seeding}
-            className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-extrabold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-sm transition-all disabled:opacity-50"
-            title="Pre-fill database with sample products, warehouses, and operations"
-          >
-            <Sparkles className={`w-3.5 h-3.5 ${seeding ? "animate-spin" : ""}`} />
-            {seeding ? "Seeding..." : "Seed Demo Data"}
-          </button>
 
           {user ? (
             <div className="relative" ref={userDropdownRef}>
