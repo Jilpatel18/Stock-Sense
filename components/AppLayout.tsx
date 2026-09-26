@@ -118,14 +118,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAuthPage =
+  const isPublicPage =
+    pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password");
 
-  if (isAuthPage) {
+  if (isPublicPage) {
     return <div className="min-h-screen bg-white text-zinc-950 font-sans">{children}</div>;
   }
+
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
