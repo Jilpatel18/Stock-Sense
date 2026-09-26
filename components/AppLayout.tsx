@@ -260,366 +260,307 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <div className="min-h-screen bg-white text-zinc-950 flex flex-col font-sans selection:bg-black selection:text-white">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 lg:px-8 py-2.5 flex items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden text-zinc-600 hover:text-black p-1 rounded-lg hover:bg-zinc-100"
-            aria-label="Toggle navigation drawer"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+        {/* Top Navbar */}
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 lg:px-8 py-2.5 flex items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden text-zinc-600 hover:text-black p-1 rounded-lg hover:bg-zinc-100"
+              aria-label="Toggle navigation drawer"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
 
-          <Link href="/dashboard" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold shadow-md shadow-black/20 group-hover:scale-105 transition-transform">
-              <Boxes className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="font-bold text-lg text-zinc-950 tracking-tight flex items-center gap-1.5">
-                Stock<span className="text-zinc-950 font-bold">Sense</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-900 border border-zinc-300">
-                  IMS
+            <Link href="/dashboard" className="flex items-center gap-2.5 group shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold shadow-md shadow-black/20 group-hover:scale-105 transition-transform">
+                <Boxes className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-lg text-zinc-950 tracking-tight flex items-center gap-1.5">
+                  Stock<span className="text-zinc-950 font-bold">Sense</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-900 border border-zinc-300">
+                    IMS
+                  </span>
                 </span>
-              </span>
-            </div>
-          </Link>
-        </div>
+              </div>
+            </Link>
+          </div>
 
-        {/* Global Search Bar */}
-        <div className="relative flex-1 max-w-md hidden sm:block">
-          <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 pointer-events-none" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
-              }}
-              placeholder="Search inventory (Product, SKU, Warehouse)..."
-              className="w-full bg-zinc-50/90 border border-zinc-200/90 rounded-xl text-xs text-zinc-950 pl-8.5 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400 font-medium transition-colors"
-            />
-            {searchLoading ? (
-              <span className="absolute right-3 text-[10px] text-zinc-400 font-mono animate-pulse">
-                ...
-              </span>
-            ) : (
-              <span className="absolute right-2.5 px-1.5 py-0.5 rounded bg-zinc-200/70 text-zinc-600 font-mono text-[10px] font-extrabold pointer-events-none border border-zinc-300/50">
-                ⌘K
-              </span>
+          {/* Global Search Bar */}
+          <div className="relative flex-1 max-w-md hidden sm:block">
+            <div className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
+                }}
+                placeholder="Search inventory (Product, SKU, Warehouse)..."
+                className="w-full bg-zinc-50/90 border border-zinc-200/90 rounded-xl text-xs text-zinc-950 pl-8.5 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400 font-medium transition-colors"
+              />
+              {searchLoading ? (
+                <span className="absolute right-3 text-[10px] text-zinc-400 font-mono animate-pulse">
+                  ...
+                </span>
+              ) : (
+                <span className="absolute right-2.5 px-1.5 py-0.5 rounded bg-zinc-200/70 text-zinc-600 font-mono text-[10px] font-extrabold pointer-events-none border border-zinc-300/50">
+                  ⌘K
+                </span>
+              )}
+            </div>
+
+            {/* Search Dropdown Popover */}
+            {showSearchDropdown && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-zinc-200 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50 p-2 text-xs space-y-3">
+                {!hasSearchHits ? (
+                  <p className="p-3 text-center text-zinc-500 text-[11px]">
+                    {searchLoading ? "Searching database..." : `No results found for "${searchQuery}"`}
+                  </p>
+                ) : (
+                  <>
+                    {/* Products */}
+                    {searchResults.products?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Products
+                        </span>
+                        {searchResults.products.map((p: any) => (
+                          <Link
+                            key={p.id}
+                            href={`/products/${p.id}`}
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-bold text-zinc-950">{p.name}</span>
+                            <span className="font-mono text-[10px] text-zinc-500">SKU: {p.sku}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Warehouses */}
+                    {searchResults.warehouses?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Warehouses
+                        </span>
+                        {searchResults.warehouses.map((w: any) => (
+                          <Link
+                            key={w.id}
+                            href="/warehouses"
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-bold text-zinc-950">{w.name}</span>
+                            <span className="font-mono text-[10px] text-zinc-500">({w.code})</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Locations */}
+                    {searchResults.locations?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Locations
+                        </span>
+                        {searchResults.locations.map((l: any) => (
+                          <Link
+                            key={l.id}
+                            href="/warehouses"
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-bold text-zinc-950">{l.name}</span>
+                            <span className="font-mono text-[10px] text-zinc-500">
+                              {l.warehouse_name} ({l.code})
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Receipts */}
+                    {searchResults.receipts?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Receipts
+                        </span>
+                        {searchResults.receipts.map((r: any) => (
+                          <Link
+                            key={r.id}
+                            href="/operations/receipts"
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-mono font-bold text-zinc-950">{r.reference}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">{r.status}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Deliveries */}
+                    {searchResults.deliveries?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Deliveries
+                        </span>
+                        {searchResults.deliveries.map((d: any) => (
+                          <Link
+                            key={d.id}
+                            href="/operations/deliveries"
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-mono font-bold text-zinc-950">{d.reference}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">{d.status}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Transfers */}
+                    {searchResults.transfers?.length > 0 && (
+                      <div>
+                        <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                          Transfers
+                        </span>
+                        {searchResults.transfers.map((t: any) => (
+                          <Link
+                            key={t.id}
+                            href="/operations/transfers"
+                            onClick={() => setShowSearchDropdown(false)}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+                          >
+                            <span className="font-mono font-bold text-zinc-950">{t.reference}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono">{t.status}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Search Dropdown Popover */}
-          {showSearchDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-zinc-200 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50 p-2 text-xs space-y-3">
-              {!hasSearchHits ? (
-                <p className="p-3 text-center text-zinc-500 text-[11px]">
-                  {searchLoading ? "Searching database..." : `No results found for "${searchQuery}"`}
-                </p>
-              ) : (
-                <>
-                  {/* Products */}
-                  {searchResults.products?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Products
-                      </span>
-                      {searchResults.products.map((p: any) => (
-                        <Link
-                          key={p.id}
-                          href={`/products/${p.id}`}
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-bold text-zinc-950">{p.name}</span>
-                          <span className="font-mono text-[10px] text-zinc-500">SKU: {p.sku}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+          {/* Action Controls & Top-Right User Profile Header */}
+          <div className="flex items-center bg-white gap-3 shrink-0">
 
-                  {/* Warehouses */}
-                  {searchResults.warehouses?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Warehouses
-                      </span>
-                      {searchResults.warehouses.map((w: any) => (
-                        <Link
-                          key={w.id}
-                          href="/warehouses"
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-bold text-zinc-950">{w.name}</span>
-                          <span className="font-mono text-[10px] text-zinc-500">({w.code})</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+            {user ? (
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                  aria-expanded={showUserDropdown}
+                  aria-haspopup="true"
+                  aria-label={`Open account menu for ${user.name || user.email}`}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200 cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-black text-white font-bold flex items-center justify-center text-xs uppercase shadow-xs shrink-0">
+                    {getInitials(user.name, user.email)}
+                  </div>
+                  <span className="font-bold text-xs text-zinc-950 max-w-[130px] sm:max-w-[170px] truncate hidden sm:inline-block">
+                    {user.name || (user.email ? user.email.split("@")[0] : "User")}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-150 ${showUserDropdown ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
 
-                  {/* Locations */}
-                  {searchResults.locations?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Locations
-                      </span>
-                      {searchResults.locations.map((l: any) => (
-                        <Link
-                          key={l.id}
-                          href="/warehouses"
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-bold text-zinc-950">{l.name}</span>
-                          <span className="font-mono text-[10px] text-zinc-500">
-                            {l.warehouse_name} ({l.code})
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Receipts */}
-                  {searchResults.receipts?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Receipts
-                      </span>
-                      {searchResults.receipts.map((r: any) => (
-                        <Link
-                          key={r.id}
-                          href="/operations/receipts"
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-mono font-bold text-zinc-950">{r.reference}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">{r.status}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Deliveries */}
-                  {searchResults.deliveries?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Deliveries
-                      </span>
-                      {searchResults.deliveries.map((d: any) => (
-                        <Link
-                          key={d.id}
-                          href="/operations/deliveries"
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-mono font-bold text-zinc-950">{d.reference}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">{d.status}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Transfers */}
-                  {searchResults.transfers?.length > 0 && (
-                    <div>
-                      <span className="px-2 text-[10px] uppercase font-bold text-zinc-400 block mb-1">
-                        Transfers
-                      </span>
-                      {searchResults.transfers.map((t: any) => (
-                        <Link
-                          key={t.id}
-                          href="/operations/transfers"
-                          onClick={() => setShowSearchDropdown(false)}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 transition-colors"
-                        >
-                          <span className="font-mono font-bold text-zinc-950">{t.reference}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">{t.status}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Action Controls & Top-Right User Profile Header */}
-        <div className="flex items-center bg-white gap-3 shrink-0">
-
-          {user ? (
-            <div className="relative" ref={userDropdownRef}>
-              <button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                aria-expanded={showUserDropdown}
-                aria-haspopup="true"
-                aria-label={`Open account menu for ${user.name || user.email}`}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-black text-white font-bold flex items-center justify-center text-xs uppercase shadow-xs shrink-0">
-                  {getInitials(user.name, user.email)}
-                </div>
-                <span className="font-bold text-xs text-zinc-950 max-w-[130px] sm:max-w-[170px] truncate hidden sm:inline-block">
-                  {user.name || (user.email ? user.email.split("@")[0] : "User")}
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-150 ${showUserDropdown ? "rotate-180" : ""
-                    }`}
-                />
-              </button>
-
-              {/* User Dropdown Menu Popover */}
-              {showUserDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-3 bg-black rounded-xl border border-zinc-800 mb-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-black border border-zinc-700 text-white font-bold flex items-center justify-center text-xs uppercase shrink-0">
-                        {getInitials(user.name, user.email)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs text-white truncate">{user.name || user.email}</p>
-                        <p className="text-[10px] text-zinc-300 font-mono font-medium truncate mt-0.5">
-                          {formatRole(user.role)}
-                        </p>
+                {/* User Dropdown Menu Popover */}
+                {showUserDropdown && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="p-3 bg-white rounded-xl text-black border border-zinc-800 mb-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-black border border-zinc-700 text-white font-bold flex items-center justify-center text-xs uppercase shrink-0">
+                          {getInitials(user.name, user.email)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-xs text-black truncate">{user.name || user.email}</p>
+                          <p className="text-[10px] text-zinc-300 font-mono font-medium truncate mt-0.5">
+                            {formatRole(user.role)}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    <div className="py-1 space-y-0.5">
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                      >
+                        <User className="w-4 h-4 text-zinc-500" />
+                        <span>Profile</span>
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                      >
+                        <Settings className="w-4 h-4 text-zinc-500" />
+                        <span>Settings</span>
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-zinc-200 pt-1 mt-1">
+                      <button
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-red-600" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="py-1 space-y-0.5">
-                    <Link
-                      href="/profile"
-                      onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
-                    >
-                      <User className="w-4 h-4 text-zinc-500" />
-                      <span>Profile</span>
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
-                    >
-                      <Settings className="w-4 h-4 text-zinc-500" />
-                      <span>Settings</span>
-                    </Link>
-                  </div>
-
-                  <div className="border-t border-zinc-200 pt-1 mt-1">
-                    <button
-                      onClick={() => {
-                        setShowUserDropdown(false);
-                        handleLogout();
-                      }}
-                      className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 text-red-600" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors shadow-xs"
-            >
-              Log In
-            </Link>
-          )}
-        </div>
-      </header>
-
-      {seedNotification && (
-        <div className="bg-black border-b border-zinc-800 text-white px-4 py-2 text-center text-xs font-bold animate-in fade-in">
-          {seedNotification}
-        </div>
-      )}
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Desktop */}
-        <aside
-          className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-50/80 border-r border-zinc-200 flex flex-col transition-transform duration-200 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-            }`}
-        >
-          <div className="p-4 flex-1 overflow-y-auto space-y-6">
-            {/* OVERVIEW Nav */}
-            <div>
-              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
-                Overview
-              </p>
-              <nav className="space-y-1">
-                {overviewItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
-                        ? "bg-black text-white font-bold shadow-xs"
-                        : "text-zinc-600 hover:text-black hover:bg-zinc-100"
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* CATALOG Nav */}
-            <div>
-              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
-                Catalog
-              </p>
-              <nav className="space-y-1">
-                {catalogItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
-                        ? "bg-black text-white font-bold shadow-xs"
-                        : "text-zinc-600 hover:text-black hover:bg-zinc-100"
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* OPERATIONS Nav */}
-            <div>
-              <div
-                onClick={() => setOperationsOpen(!operationsOpen)}
-                className="px-3 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 cursor-pointer hover:text-zinc-900"
-              >
-                <span>Operations</span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform ${operationsOpen ? "rotate-180" : ""}`}
-                />
+                )}
               </div>
-              {operationsOpen && (
-                <nav className="space-y-1 pl-1">
-                  {operationsItems.map((item) => {
+            ) : (
+              <Link
+                href="/login"
+                className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors shadow-xs"
+              >
+                Log In
+              </Link>
+            )}
+          </div>
+        </header>
+
+        {seedNotification && (
+          <div className="bg-black border-b border-zinc-800 text-white px-4 py-2 text-center text-xs font-bold animate-in fade-in">
+            {seedNotification}
+          </div>
+        )}
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar Desktop */}
+          <aside
+            className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-50/80 border-r border-zinc-200 flex flex-col transition-transform duration-200 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+              }`}
+          >
+            <div className="p-4 flex-1 overflow-y-auto space-y-6">
+              {/* OVERVIEW Nav */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
+                  Overview
+                </p>
+                <nav className="space-y-1">
+                  {overviewItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
+                        className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
                           ? "bg-black text-white font-bold shadow-xs"
                           : "text-zinc-600 hover:text-black hover:bg-zinc-100"
                           }`}
@@ -630,69 +571,128 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     );
                   })}
                 </nav>
-              )}
-            </div>
+              </div>
 
-            {/* LOCATION Nav */}
-            <div>
-              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
-                Location
-              </p>
-              <nav className="space-y-1">
-                {locationItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
-                        ? "bg-black text-white font-bold shadow-xs"
-                        : "text-zinc-600 hover:text-black hover:bg-zinc-100"
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
+              {/* CATALOG Nav */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
+                  Catalog
+                </p>
+                <nav className="space-y-1">
+                  {catalogItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
+                          ? "bg-black text-white font-bold shadow-xs"
+                          : "text-zinc-600 hover:text-black hover:bg-zinc-100"
+                          }`}
+                      >
+                        <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
 
-            {/* SYSTEM Nav */}
-            <div>
-              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
-                System
-              </p>
-              <nav className="space-y-1">
-                {systemItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
-                        ? "bg-black text-white font-bold shadow-xs"
-                        : "text-zinc-600 hover:text-black hover:bg-zinc-100"
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          </div>
-        </aside>
+              {/* OPERATIONS Nav */}
+              <div>
+                <div
+                  onClick={() => setOperationsOpen(!operationsOpen)}
+                  className="px-3 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 cursor-pointer hover:text-zinc-900"
+                >
+                  <span>Operations</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform ${operationsOpen ? "rotate-180" : ""}`}
+                  />
+                </div>
+                {operationsOpen && (
+                  <nav className="space-y-1 pl-1">
+                    {operationsItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
+                            ? "bg-black text-white font-bold shadow-xs"
+                            : "text-zinc-600 hover:text-black hover:bg-zinc-100"
+                            }`}
+                        >
+                          <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                )}
+              </div>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-white">
-          {children}
-        </main>
+              {/* LOCATION Nav */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
+                  Location
+                </p>
+                <nav className="space-y-1">
+                  {locationItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
+                          ? "bg-black text-white font-bold shadow-xs"
+                          : "text-zinc-600 hover:text-black hover:bg-zinc-100"
+                          }`}
+                      >
+                        <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* SYSTEM Nav */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
+                  System
+                </p>
+                <nav className="space-y-1">
+                  {systemItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${isActive
+                          ? "bg-black text-white font-bold shadow-xs"
+                          : "text-zinc-600 hover:text-black hover:bg-zinc-100"
+                          }`}
+                      >
+                        <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-white">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
     </ToastProvider>
   );
 }
