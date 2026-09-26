@@ -11,6 +11,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
     const userId = searchParams.get("user_id");
+    const entityType = searchParams.get("entity_type");
+    const startDate = searchParams.get("start_date");
+    const endDate = searchParams.get("end_date");
     const search = searchParams.get("search");
 
     const page = parseInt(searchParams.get("page") || "1");
@@ -35,11 +38,26 @@ export async function GET(request: Request) {
       conditions.push(`a.user_id = $${params.length}`);
     }
 
+    if (entityType) {
+      params.push(entityType);
+      conditions.push(`a.entity_type = $${params.length}`);
+    }
+
+    if (startDate) {
+      params.push(startDate);
+      conditions.push(`a.created_at >= $${params.length}`);
+    }
+
+    if (endDate) {
+      params.push(endDate);
+      conditions.push(`a.created_at <= $${params.length}`);
+    }
+
     if (search) {
       params.push(`%${search}%`);
       const searchParam = `$${params.length}`;
       conditions.push(
-        `(a.action ILIKE ${searchParam} OR a.user_email ILIKE ${searchParam} OR u.name ILIKE ${searchParam})`
+        `(a.action ILIKE ${searchParam} OR a.user_email ILIKE ${searchParam} OR u.name ILIKE ${searchParam} OR a.entity_type ILIKE ${searchParam})`
       );
     }
 

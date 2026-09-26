@@ -415,6 +415,89 @@ async function runFullTestSuite() {
     const uniqueSeqs = new Set(generatedSeqs);
     assert(uniqueSeqs.size === 10, "Concurrent document sequence generation yields 10 unique, non-duplicate numbers");
 
+    // --------------------------------------------------
+    // SECTION 4: STOCK LEDGER & AUDIT TRAIL TESTS (PHASE 4)
+    // --------------------------------------------------
+    console.log("\n--- 4. STOCK LEDGER & AUDIT TRAIL TESTS (PHASE 4) ---");
+
+    // Test 4.1 Receipt Ledger Entry
+    const p4ProdRes = await query(
+      `INSERT INTO products (name, sku, unit_of_measure, reorder_level) VALUES ('Phase4 Flour', $1, 'KG', 10) RETURNING id`,
+      [`SKU-P4-${Date.now()}`]
+    );
+    const p4ProdId = p4ProdRes.rows[0].id;
+
+    const recP4No = await getNextDocumentNumber(client, "REC");
+    const recP4 = (await query(`INSERT INTO receipts (receipt_number, destination_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [recP4No, loc1Id, managerId])).rows[0];
+    await query(`INSERT INTO receipt_items (receipt_id, product_id, quantity) VALUES ($1, $2, 200)`, [recP4.id, p4ProdId]);
+    await validateReceipt(recP4.id, managerId);
+
+    const recLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [recP4No]);
+    assert(recLedgerRes.rows.length === 1, "Receipt validation creates 1 stock ledger record");
+    assert(recLedgerRes.rows[0].operation_type === "RECEIPT", "Receipt ledger record has operation_type = 'RECEIPT'");
+    assert(parseFloat(recLedgerRes.rows[0].quantity_change) === 200, "Receipt ledger record has quantity_change = +200");
+
+    // Test 4.2 Transfer Creates 2 Ledger Entries (TRANSFER_OUT and TRANSFER_IN)
+    const trfP4No = await getNextDocumentNumber(client, "TRF");
+    const trfP4 = (await query(`INSERT INTO internal_transfers (transfer_number, source_location_id, destination_location_id, status, created_by) VALUES ($1, $2, $3, 'Draft', $4) RETURNING id`, [trfP4No, loc1Id, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO internal_transfer_items (transfer_id, product_id, quantity) VALUES ($1, $2, 60)`, [trfP4.id, p4ProdId]);
+    await validateTransfer(trfP4.id, managerId);
+
+    const trfLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1 ORDER BY id ASC`, [trfP4No]);
+    assert(trfLedgerRes.rows.length === 2, "Transfer validation creates 2 stock ledger records (TRANSFER_OUT & TRANSFER_IN)");
+    assert(trfLedgerRes.rows[0].operation_type === "TRANSFER_OUT" && parseFloat(trfLedgerRes.rows[0].quantity_change) === -60, "First transfer ledger record is TRANSFER_OUT (-60)");
+    assert(trfLedgerRes.rows[1].operation_type === "TRANSFER_IN" && parseFloat(trfLedgerRes.rows[1].quantity_change) === 60, "Second transfer ledger record is TRANSFER_IN (+60)");
+
+    // Test 4.3 Delivery Ledger Entry
+    const delP4No = await getNextDocumentNumber(client, "DEL");
+    const delP4 = (await query(`INSERT INTO delivery_orders (delivery_number, source_location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [delP4No, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO delivery_items (delivery_id, product_id, quantity) VALUES ($1, $2, 25)`, [delP4.id, p4ProdId]);
+    await validateDelivery(delP4.id, managerId);
+
+    const delLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [delP4No]);
+    assert(delLedgerRes.rows.length === 1, "Delivery validation creates 1 stock ledger record");
+    assert(delLedgerRes.rows[0].operation_type === "DELIVERY", "Delivery ledger record has operation_type = 'DELIVERY'");
+    assert(parseFloat(delLedgerRes.rows[0].quantity_change) === -25, "Delivery ledger record has quantity_change = -25");
+
+    // Test 4.4 Adjustment Ledger Entry
+    const adjP4No = await getNextDocumentNumber(client, "ADJ");
+    const adjP4 = (await query(`INSERT INTO inventory_adjustments (adjustment_number, location_id, status, created_by) VALUES ($1, $2, 'Draft', $3) RETURNING id`, [adjP4No, loc2Id, managerId])).rows[0];
+    await query(`INSERT INTO inventory_adjustment_items (adjustment_id, product_id, counted_quantity, previous_quantity, difference) VALUES ($1, $2, 30, 35, -5)`, [adjP4.id, p4ProdId]);
+    await validateAdjustment(adjP4.id, managerId);
+
+    const adjLedgerRes = await query(`SELECT * FROM stock_ledger WHERE reference_number = $1`, [adjP4No]);
+    assert(adjLedgerRes.rows.length === 1, "Adjustment validation creates 1 stock ledger record");
+    assert(adjLedgerRes.rows[0].operation_type === "ADJUSTMENT", "Adjustment ledger record has operation_type = 'ADJUSTMENT'");
+    assert(parseFloat(adjLedgerRes.rows[0].quantity_change) === -5, "Adjustment ledger record has quantity_change = -5");
+
+    // Test 4.5 Audit Log Event Creation & Sensitive Data Sanitization
+    const { logAuditEvent } = await import("../lib/audit");
+    await logAuditEvent({
+      userId: managerId,
+      userEmail: "manager@test.com",
+      action: "TEST_SENSITIVE_AUDIT",
+      entityType: "SECURITY",
+      details: {
+        password: "MySuperSecretPassword123!",
+        otp: "654321",
+        otp_hash: "secret_hash_value",
+        jwt_secret: "my_super_secret_jwt_key",
+        normalField: "Safe Value"
+      }
+    });
+
+    const auditCheck = await query(`SELECT * FROM audit_logs WHERE action = 'TEST_SENSITIVE_AUDIT' ORDER BY id DESC LIMIT 1`);
+    assert(auditCheck.rows.length === 1, "Audit event logged successfully in audit_logs table");
+    const auditDetails = auditCheck.rows[0].details;
+    assert(
+      auditDetails.password === "[REDACTED]" &&
+      auditDetails.otp === "[REDACTED]" &&
+      auditDetails.otp_hash === "[REDACTED]" &&
+      auditDetails.jwt_secret === "[REDACTED]" &&
+      auditDetails.normalField === "Safe Value",
+      "Audit log automatically redacts sensitive keys (passwords, OTPs, hashes, secrets)"
+    );
+
     console.log("\n==================================================");
     console.log(`TEST SUITE SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
     console.log("==================================================\n");

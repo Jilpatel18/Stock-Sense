@@ -150,12 +150,85 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Immutable Stock Ledger History for Product */}
+      {/* Product Movement Timeline */}
+      <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+          <h2 className="text-sm font-bold text-zinc-950 flex items-center gap-2 uppercase tracking-wider">
+            <History className="w-4 h-4 text-zinc-950" />
+            Product Movement Timeline
+          </h2>
+          <div className="text-right">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Current Stock</span>
+            <span className="text-base font-black text-zinc-950 font-mono">
+              {product.total_stock} {product.unit_of_measure}
+            </span>
+          </div>
+        </div>
+
+        {product.history?.length === 0 ? (
+          <p className="text-xs text-zinc-500 py-4 text-center">No movement history recorded yet.</p>
+        ) : (
+          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-zinc-200">
+            {product.history?.map((entry: any) => {
+              const change = parseFloat(entry.quantity_change);
+              const isPositive = change > 0;
+              const formattedTime = new Date(entry.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              const formattedDate = new Date(entry.created_at).toLocaleDateString();
+
+              return (
+                <div key={entry.id} className="relative flex items-start justify-between gap-4 text-xs">
+                  {/* Timeline bullet dot */}
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-zinc-950 ring-4 ring-white" />
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] text-zinc-500 font-semibold">
+                        {formattedTime} <span className="text-[10px] text-zinc-400">({formattedDate})</span>
+                      </span>
+                      <span className="font-bold text-zinc-950 px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 uppercase tracking-tight text-[11px]">
+                        {entry.operation_type}
+                      </span>
+                      <span className="font-mono text-[11px] text-zinc-600 font-semibold">
+                        #{entry.reference_number}
+                      </span>
+                    </div>
+
+                    <p className="text-zinc-600 text-[11px]">
+                      Location: <span className="font-medium text-zinc-900">{entry.location_name}</span> • By:{" "}
+                      <span className="font-medium text-zinc-900">{entry.performed_by_name || "System"}</span>
+                    </p>
+                  </div>
+
+                  <div className="text-right whitespace-nowrap">
+                    <span
+                      className={`font-mono text-sm font-black px-2.5 py-1 rounded-lg border ${
+                        isPositive
+                          ? "bg-zinc-950 text-white border-zinc-950"
+                          : "bg-zinc-100 text-zinc-900 border-zinc-300"
+                      }`}
+                    >
+                      {isPositive ? `+${change}` : change} {product.unit_of_measure}
+                    </span>
+                    <span className="block text-[10px] text-zinc-400 font-mono mt-1">
+                      After: {entry.quantity_after} {product.unit_of_measure}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Immutable Stock Ledger Table */}
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-zinc-950 flex items-center gap-2">
-            <History className="w-4 h-4 text-zinc-950" />
-            Stock Movement History (Ledger)
+          <h2 className="text-xs font-bold text-zinc-950 flex items-center gap-2 uppercase tracking-wider">
+            <SlidersHorizontal className="w-4 h-4 text-zinc-950" />
+            Detailed Stock Ledger Table
           </h2>
           <span className="text-[10px] text-zinc-500 font-mono">Immutable Transaction Audit</span>
         </div>
