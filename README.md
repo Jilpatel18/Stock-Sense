@@ -127,12 +127,13 @@ JWT_SECRET="your-super-secret-jwt-signing-key-min-32-chars"
 # Optional Test Database URL for npm test
 TEST_DATABASE_URL="postgres://user:password@ep-sample-pool.us-east-2.aws.neon.tech/testdb?sslmode=require"
 
-# Optional Email SMTP Settings for Live OTP Sending
+# Optional Email Settings for Live OTP Sending
+EMAIL_PROVIDER="smtp" # 'console' | 'smtp'
+EMAIL_FROM="noreply@stocksense.com"
 SMTP_HOST="smtp.mailtrap.io"
 SMTP_PORT=587
 SMTP_USER="smtp-username"
-SMTP_PASS="smtp-password"
-SMTP_FROM="noreply@stocksense.com"
+SMTP_PASSWORD="smtp-password"
 ```
 
 ---

@@ -14,10 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StockSense | Modular Inventory Management System",
+  title: "StockSense | Inventory Management System",
   description:
-    "Real-time location-aware inventory tracking system with stock ledger history, receipts, delivery orders, internal transfers, and stock adjustments.",
+    "Transactional multi-warehouse inventory management with immutable stock ledger, audit trails, and role-based access control.",
 };
+
 
 export default function RootLayout({
   children,

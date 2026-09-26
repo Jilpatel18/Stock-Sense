@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import fs from "fs";
 import path from "path";
 
-if (!process.env.DATABASE_URL) {
+if (!process.env.DATABASE_URL && process.env.NODE_ENV !== "production") {
   try {
     const envPath = path.resolve(process.cwd(), ".env");
     if (fs.existsSync(envPath)) {
@@ -25,21 +25,19 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
 });
 
 export async function query(text: string, params?: any[]) {
-  const start = Date.now();
   try {
     const res = await pool.query(text, params);
     return res;
   } catch (err) {
-    console.error("Database query error:", err, { text, params });
+    // Log query text without logging raw query params to avoid leaking passwords, hashes, OTPs, or tokens in logs
+    console.error("Database query execution error:", err instanceof Error ? err.message : err, { text });
     throw err;
   }
 }
@@ -48,3 +46,4 @@ export async function getClient() {
   const client = await pool.connect();
   return client;
 }
+
