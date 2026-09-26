@@ -30,6 +30,16 @@ import {
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "ledger" | "validation">("dashboard");
+  const [user, setUser] = useState<any>(null);
+
+  React.useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.user) setUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-white text-zinc-950 font-sans selection:bg-black selection:text-white flex flex-col">
@@ -63,19 +73,31 @@ export default function LandingPage() {
 
           {/* Action CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-xs font-bold text-zinc-800 hover:text-black transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-xs font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
-            >
-              <span>Open Dashboard</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {!user ? (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-xs font-bold text-zinc-800 hover:text-black transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-xs font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                >
+                  <span>Open StockSense</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 text-xs font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+              >
+                <span>Go to Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -127,20 +149,32 @@ export default function LandingPage() {
               Ledger & Audit
             </a>
             <div className="pt-2 grid grid-cols-2 gap-2">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center px-4 py-2 text-xs font-bold text-zinc-800 bg-zinc-100 rounded-lg border border-zinc-200"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center px-4 py-2 text-xs font-extrabold text-white bg-black rounded-lg"
-              >
-                Open Dashboard
-              </Link>
+              {!user ? (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-center px-4 py-2 text-xs font-bold text-zinc-800 bg-zinc-100 rounded-lg border border-zinc-200"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-center px-4 py-2 text-xs font-extrabold text-white bg-black rounded-lg"
+                  >
+                    Open StockSense
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="col-span-2 text-center px-4 py-2 text-xs font-extrabold text-white bg-black rounded-lg"
+                >
+                  Go to Dashboard
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -168,10 +202,10 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href="/dashboard"
+              href={user ? "/dashboard" : "/login"}
               className="w-full sm:w-auto px-7 py-3.5 text-sm font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group"
             >
-              <span>Open StockSense</span>
+              <span>{user ? "Go to Dashboard" : "Open StockSense"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <a

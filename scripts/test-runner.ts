@@ -42,6 +42,8 @@ import { hashPassword, comparePassword, signSessionToken, verifySessionToken, ge
 import { validatePasswordPolicy } from "../lib/password-policy";
 import { validateReceipt, validateDelivery, validateTransfer, validateAdjustment } from "../lib/inventory-service";
 import { getNextDocumentNumber } from "../lib/sequence";
+import { getInitials, formatRole } from "../components/AppLayout";
+import { getSafeRedirect } from "../app/login/page";
 
 let passedCount = 0;
 let failedCount = 0;
@@ -336,6 +338,27 @@ async function runFullTestSuite() {
     const dbTotalStock = loc1Stock + loc2Stock;
     assert(dbTotalStock === 77, "PostgreSQL total stock equals 77 KG (Loc A: 67 KG, Loc B: 10 KG)");
     assert(dbTotalStock === ledgerTotal, "Database inventory matches Stock Ledger calculation exactly (77 KG)");
+
+    // --------------------------------------------------
+    // SECTION 6: DYNAMIC PROFILE HEADER & ROUTE PROTECTION TESTS
+    // --------------------------------------------------
+    console.log("\n--- 6. DYNAMIC PROFILE HEADER & ROUTE PROTECTION TESTS ---");
+
+    // Test 6.1 Initials Generation
+    assert(getInitials("Jil Patel") === "JP", "Initials for 'Jil Patel' resolves to 'JP'");
+    assert(getInitials("John") === "JO", "Initials for single name 'John' resolves to 'JO'");
+    assert(getInitials(undefined, "jil@example.com") === "JI", "Fallback initials from email 'jil@example.com' resolves to 'JI'");
+
+    // Test 6.2 Role Formatting
+    assert(formatRole("INVENTORY_MANAGER") === "Inventory Manager", "Role 'INVENTORY_MANAGER' formats to 'Inventory Manager'");
+    assert(formatRole("WAREHOUSE_STAFF") === "Warehouse Staff", "Role 'WAREHOUSE_STAFF' formats to 'Warehouse Staff'");
+
+    // Test 6.3 Open-Redirect Sanitization
+    assert(getSafeRedirect("/products") === "/products", "Valid internal redirect '/products' accepted");
+    assert(getSafeRedirect("/operations/history") === "/operations/history", "Valid internal redirect '/operations/history' accepted");
+    assert(getSafeRedirect("https://evil-site.com") === "/dashboard", "Malicious external redirect 'https://evil-site.com' rejected -> '/dashboard'");
+    assert(getSafeRedirect("//evil-site.com") === "/dashboard", "Protocol relative redirect '//evil-site.com' rejected -> '/dashboard'");
+    assert(getSafeRedirect(null) === "/dashboard", "Null redirect defaults to '/dashboard'");
 
     // --------------------------------------------------
     // CLEANUP TEST DATA

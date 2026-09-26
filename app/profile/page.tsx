@@ -14,6 +14,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+import { getInitials, formatRole } from "@/components/AppLayout";
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -40,7 +42,7 @@ export default function ProfilePage() {
         const data = await res.json();
         setUser(data.user);
         if (data.user) {
-          setName(data.user.name);
+          setName(data.user.name || "");
         }
       }
     } catch (err) {
@@ -51,8 +53,14 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      router.push("/login");
+      router.refresh();
+    }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -100,14 +108,14 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-zinc-500 text-xs">Loading user profile...</div>;
+    return <div className="text-center py-12 text-zinc-500 text-xs font-medium">Loading user profile...</div>;
   }
 
   if (!user) {
     return (
       <div className="max-w-md mx-auto py-12 text-center text-zinc-400 space-y-4">
-        <p>You are not logged in.</p>
-        <Link href="/login" className="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold">
+        <p className="text-xs font-semibold">You are not logged in.</p>
+        <Link href="/login" className="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold inline-block">
           Log In
         </Link>
       </div>
@@ -122,11 +130,11 @@ export default function ProfilePage() {
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-xl font-black uppercase shadow-sm">
-              {user.name.charAt(0)}
+            <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-lg font-black uppercase shadow-sm shrink-0">
+              {getInitials(user.name, user.email)}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-950 tracking-tight">{user.name}</h1>
+              <h1 className="text-xl font-bold text-zinc-950 tracking-tight">{user.name || user.email}</h1>
               <p className="text-xs text-zinc-600 flex items-center gap-1.5 mt-0.5 font-mono">
                 <Mail className="w-3.5 h-3.5 text-zinc-500" />
                 {user.email}
@@ -137,12 +145,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-black text-white">
               {isManager ? <Shield className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
-              {isManager ? "Inventory Manager" : "Warehouse Staff"}
+              {formatRole(user.role)}
             </span>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-zinc-500 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors"
+              className="p-2 text-zinc-500 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />

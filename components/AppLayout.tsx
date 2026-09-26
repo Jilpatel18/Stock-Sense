@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -32,6 +32,28 @@ interface UserType {
   role: string;
 }
 
+export function getInitials(name?: string, email?: string): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  if (email && email.trim()) {
+    const localPart = email.trim().split("@")[0];
+    return localPart.slice(0, 2).toUpperCase();
+  }
+  return "US";
+}
+
+export function formatRole(role?: string): string {
+  if (!role) return "User";
+  if (role === "INVENTORY_MANAGER") return "Inventory Manager";
+  if (role === "WAREHOUSE_STAFF") return "Warehouse Staff";
+  return role.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -41,6 +63,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [seedNotification, setSeedNotification] = useState<string | null>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // Global Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,6 +93,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
+    setShowUserDropdown(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
     if (searchQuery.trim().length >= 2) {
       performSearch(searchQuery.trim());
     } else {
@@ -94,9 +142,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    router.push("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout request error", err);
+    } finally {
+      setUser(null);
+      router.push("/login");
+      router.refresh();
+    }
   };
 
   const handleSeedData = async () => {
@@ -122,12 +176,41 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
-    pathname.startsWith("/forgot-password");
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
+
+  useEffect(() => {
+    if (!isPublicPage && !loading && !user) {
+      const safePath = pathname.startsWith("/") && !pathname.startsWith("//") ? pathname : "/dashboard";
+      router.push(`/login?redirect=${encodeURIComponent(safePath)}`);
+    }
+  }, [isPublicPage, loading, user, pathname, router]);
 
   if (isPublicPage) {
     return <div className="min-h-screen bg-white text-zinc-950 font-sans">{children}</div>;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white text-zinc-950 flex flex-col font-sans">
+        <header className="bg-white border-b border-zinc-200 px-4 lg:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-zinc-200 animate-pulse" />
+            <div className="w-28 h-5 rounded bg-zinc-200 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-32 h-8 rounded-xl bg-zinc-100 animate-pulse" />
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-zinc-500 font-medium">Verifying session...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -165,7 +248,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden text-zinc-600 hover:text-black p-1"
+            className="lg:hidden text-zinc-600 hover:text-black p-1 rounded-lg hover:bg-zinc-100"
+            aria-label="Toggle navigation drawer"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -341,7 +425,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {/* Action Controls */}
+        {/* Action Controls & Top-Right User Profile Header */}
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={handleSeedData}
@@ -352,6 +436,88 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Sparkles className={`w-3.5 h-3.5 ${seeding ? "animate-spin" : ""}`} />
             {seeding ? "Seeding..." : "Seed Demo Data"}
           </button>
+
+          {user ? (
+            <div className="relative" ref={userDropdownRef}>
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                aria-expanded={showUserDropdown}
+                aria-haspopup="true"
+                aria-label={`Open account menu for ${user.name || user.email}`}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200 cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shadow-sm shrink-0">
+                  {getInitials(user.name, user.email)}
+                </div>
+                <span className="font-bold text-xs text-zinc-950 max-w-[130px] sm:max-w-[170px] truncate hidden sm:inline-block">
+                  {user.name || (user.email ? user.email.split("@")[0] : "User")}
+                </span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-150 ${
+                    showUserDropdown ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* User Dropdown Menu Popover */}
+              {showUserDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100 mb-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shrink-0">
+                        {getInitials(user.name, user.email)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-xs text-zinc-950 truncate">{user.name || user.email}</p>
+                        <p className="text-[10px] text-zinc-500 font-mono font-medium truncate mt-0.5">
+                          {formatRole(user.role)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="py-1 space-y-0.5">
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                    >
+                      <User className="w-4 h-4 text-zinc-500" />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-zinc-500" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-zinc-200 pt-1 mt-1">
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        handleLogout();
+                      }}
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-red-600" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors shadow-sm"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       </header>
 
@@ -465,12 +631,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2.5">
                 <div className="flex items-center gap-3 p-2 rounded-xl bg-zinc-50 border border-zinc-200/80">
                   <div className="w-8 h-8 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shrink-0">
-                    {user.name ? user.name.charAt(0) : "U"}
+                    {getInitials(user.name, user.email)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-xs text-zinc-950 truncate leading-tight">{user.name}</p>
+                    <p className="font-bold text-xs text-zinc-950 truncate leading-tight">
+                      {user.name || user.email}
+                    </p>
                     <p className="text-[10px] text-zinc-500 font-mono font-medium truncate">
-                      {user.role === "INVENTORY_MANAGER" ? "Inventory Manager" : "Warehouse Staff"}
+                      {formatRole(user.role)}
                     </p>
                   </div>
                 </div>
@@ -483,7 +651,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     title="Edit Profile"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
+                    <span>Profile</span>
                   </Link>
                   <button
                     onClick={handleLogout}
