@@ -73,12 +73,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">{product.name}</h1>
-              <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-300 font-bold">
+              <h1 className="text-2xl font-bold text-blue-600 tracking-tight">{product.name}</h1>
+              <span className="text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-extrabold">
                 SKU: {product.sku}
               </span>
             </div>
-            <p className="text-xs text-zinc-600 mt-1">
+            <p className="text-xs text-zinc-600 mt-1 font-medium">
               Category: {product.category_name || "Uncategorized"} • Unit: {product.unit_of_measure}
             </p>
           </div>
@@ -125,7 +125,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         {/* Locations breakdown */}
         <div className="md:col-span-2 bg-white border border-zinc-200 rounded-2xl p-5 space-y-3 shadow-sm">
           <h2 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-black" />
+            <Building2 className="w-4 h-4 text-blue-600" />
             Location-Aware Stock Breakdown
           </h2>
 
@@ -142,7 +142,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     <p className="font-semibold text-zinc-950">{loc.location_name}</p>
                     <p className="text-[10px] text-zinc-500">{loc.warehouse_name} ({loc.location_code})</p>
                   </div>
-                  <span className="font-extrabold text-zinc-950 font-mono text-sm">
+                  <span className="font-extrabold text-zinc-950 text-sm">
                     {loc.quantity} {product.unit_of_measure}
                   </span>
                 </div>
@@ -161,13 +161,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="flex justify-between border-b border-zinc-200 pb-2">
               <span className="text-zinc-600">Status:</span>
-              <span className={product.is_low_stock ? "text-black font-bold" : "text-zinc-600 font-medium"}>
+              <span className={product.is_low_stock ? "text-amber-700 font-bold" : "text-zinc-600 font-medium"}>
                 {product.is_low_stock ? "Low Stock Alert" : "Healthy Stock"}
               </span>
             </div>
             <div className="flex justify-between pb-1">
               <span className="text-zinc-600">Created:</span>
-              <span className="text-zinc-600 font-mono text-[11px]">
+              <span className="text-zinc-600 text-[11px] font-medium">
                 {new Date(product.created_at).toLocaleDateString()}
               </span>
             </div>
@@ -179,12 +179,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
           <h2 className="text-sm font-bold text-zinc-950 flex items-center gap-2 uppercase tracking-wider">
-            <History className="w-4 h-4 text-zinc-950" />
+            <History className="w-4 h-4 text-blue-600" />
             Product Movement Timeline
           </h2>
           <div className="text-right">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Current Stock</span>
-            <span className="text-base font-black text-zinc-950 font-mono">
+            <span className="text-base font-black text-zinc-950">
               {product.total_stock} {product.unit_of_measure}
             </span>
           </div>
@@ -206,17 +206,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               return (
                 <div key={entry.id} className="relative flex items-start justify-between gap-4 text-xs">
                   {/* Timeline bullet dot */}
-                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-zinc-950 ring-4 ring-white" />
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100" />
 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-zinc-500 font-semibold">
+                      <span className="text-[11px] text-zinc-500 font-semibold">
                         {formattedTime} <span className="text-[10px] text-zinc-400">({formattedDate})</span>
                       </span>
                       <span className="font-bold text-zinc-950 px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 uppercase tracking-tight text-[11px]">
                         {entry.operation_type}
                       </span>
-                      <span className="font-mono text-[11px] text-zinc-600 font-semibold">
+                      <span className="text-[11px] text-zinc-600 font-semibold">
                         #{entry.reference_number}
                       </span>
                     </div>
@@ -229,15 +229,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
                   <div className="text-right whitespace-nowrap">
                     <span
-                      className={`font-mono text-sm font-black px-2.5 py-1 rounded-lg border ${
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
                         isPositive
-                          ? "bg-zinc-950 text-white border-zinc-950"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                           : "bg-zinc-100 text-zinc-900 border-zinc-300"
                       }`}
                     >
                       {isPositive ? `+${change}` : change} {product.unit_of_measure}
                     </span>
-                    <span className="block text-[10px] text-zinc-400 font-mono mt-1">
+                    <span className="block text-[10px] text-zinc-400 font-medium mt-1">
                       After: {entry.quantity_after} {product.unit_of_measure}
                     </span>
                   </div>

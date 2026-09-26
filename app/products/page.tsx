@@ -195,7 +195,7 @@ export default function ProductsPage() {
             onClick={() => setLowStockOnly(!lowStockOnly)}
             className={`px-3 py-2 text-xs font-semibold rounded-xl border flex items-center gap-1.5 transition-all ${
               lowStockOnly
-                ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                 : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:text-zinc-950"
             }`}
           >

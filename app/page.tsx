@@ -42,7 +42,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-zinc-950 font-sans selection:bg-black selection:text-white flex flex-col">
+    <div className="min-h-screen bg-white text-zinc-950 font-sans selection:bg-blue-600 selection:text-white flex flex-col">
       {/* -------------------------------------------------- */}
       {/* 1. NAVBAR */}
       {/* -------------------------------------------------- */}
@@ -161,7 +161,7 @@ export default function LandingPage() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-center px-4 py-2 text-xs font-extrabold text-white bg-black rounded-lg"
+                    className="text-center px-4 py-2 text-xs font-extrabold text-white bg-blue-600 rounded-lg shadow-xs"
                   >
                     Open StockSense
                   </Link>
@@ -170,7 +170,7 @@ export default function LandingPage() {
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="col-span-2 text-center px-4 py-2 text-xs font-extrabold text-white bg-black rounded-lg"
+                  className="col-span-2 text-center px-4 py-2 text-xs font-extrabold text-white bg-blue-600 rounded-lg shadow-xs"
                 >
                   Go to Dashboard
                 </Link>
@@ -809,21 +809,21 @@ export default function LandingPage() {
           <div className="pt-6">
             <h3 className="text-base font-extrabold text-black mb-4">Application Roles</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-2xl bg-zinc-900 text-white space-y-3">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">
+              <div className="p-6 rounded-2xl bg-blue-600 text-white space-y-3 shadow-md shadow-blue-500/20">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-blue-700 px-2 py-0.5 rounded border border-blue-500/50">
                   Manager Role
                 </span>
                 <h4 className="text-lg font-black text-white">INVENTORY_MANAGER</h4>
-                <ul className="space-y-2 text-xs text-zinc-300 font-medium">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> Full operational validation authority</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> Manage categories, warehouses, locations & suppliers</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> View full Stock Ledger and Security Audit Logs</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> Export CSV datasets & trigger demo seeds</li>
+                <ul className="space-y-2 text-xs text-blue-50 font-medium">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" /> Full operational validation authority</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" /> Manage categories, warehouses, locations & suppliers</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" /> View full Stock Ledger and Security Audit Logs</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" /> Export CSV datasets & trigger demo seeds</li>
                 </ul>
               </div>
 
               <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-300 space-y-3">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-700 bg-zinc-200 px-2 py-0.5 rounded border border-zinc-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 bg-zinc-200 px-2 py-0.5 rounded border border-zinc-300">
                   Staff Role
                 </span>
                 <h4 className="text-lg font-black text-black">WAREHOUSE_STAFF</h4>
