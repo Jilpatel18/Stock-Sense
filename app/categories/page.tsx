@@ -168,8 +168,8 @@ export default function CategoriesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2.5">
-            <Tag className="w-6 h-6 text-blue-600" /> Product Categories
+          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2.5">
+            <Tag className="w-6 h-6 text-zinc-950" /> Product Categories
           </h1>
           <p className="text-xs text-zinc-600 mt-1 font-medium">
             Organize inventory items by logical groups, codes, and classifications.
@@ -180,7 +180,7 @@ export default function CategoriesPage() {
           {isManager && (
             <button
               onClick={handleOpenCreate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs shadow-blue-500/20 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-zinc-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
             >
               <Plus className="w-4 h-4" />
               Add Category
@@ -235,7 +235,7 @@ export default function CategoriesPage() {
           {isManager && !searchQuery && (
             <button
               onClick={handleOpenCreate}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 shadow-xs shadow-blue-500/20"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-xl hover:bg-zinc-800 shadow-xs"
             >
               <Plus className="w-4 h-4" /> Create Category
             </button>
@@ -247,14 +247,14 @@ export default function CategoriesPage() {
             <div
               key={cat.id}
               className={`p-5 rounded-2xl border transition-all bg-white flex flex-col justify-between ${
-                cat.is_active ? "border-zinc-200 hover:border-blue-600" : "border-zinc-200 bg-zinc-50/60 opacity-75"
+                cat.is_active ? "border-zinc-200 hover:border-black" : "border-zinc-200 bg-zinc-50/60 opacity-75"
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0">
-                      <Tag className="w-4 h-4 text-blue-600" />
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 border border-zinc-300 flex items-center justify-center shrink-0">
+                      <Tag className="w-4 h-4 text-black" />
                     </div>
                     <div>
                       <h3 className="font-extrabold text-sm text-zinc-950 leading-tight">{cat.name}</h3>
@@ -283,7 +283,7 @@ export default function CategoriesPage() {
               <div className="mt-5 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
                 <Link
                   href={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className="font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                  className="font-bold text-black hover:underline flex items-center gap-1"
                 >
                   <Package className="w-3.5 h-3.5" />
                   View Products
@@ -321,7 +321,7 @@ export default function CategoriesPage() {
           <div className="bg-white rounded-2xl border border-zinc-300 max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
               <h3 className="font-extrabold text-base text-zinc-950 flex items-center gap-2">
-                <Tag className="w-5 h-5 text-blue-600" />
+                <Tag className="w-5 h-5 text-black" />
                 {editItem ? "Edit Category" : "Add New Category"}
               </h3>
               <button
@@ -335,7 +335,7 @@ export default function CategoriesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1">
-                  Category Name <span className="text-blue-600">*</span>
+                  Category Name <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -343,13 +343,13 @@ export default function CategoriesPage() {
                   placeholder="e.g. Electronics"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-950 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-950 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1">
-                  Category Code <span className="text-blue-600">*</span>
+                  Category Code <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -357,7 +357,7 @@ export default function CategoriesPage() {
                   placeholder="e.g. ELEC"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-zinc-950 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 uppercase"
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-zinc-950 focus:outline-none focus:border-black focus:ring-1 focus:ring-black uppercase"
                 />
               </div>
 
@@ -368,7 +368,7 @@ export default function CategoriesPage() {
                   placeholder="Optional details about this category..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-medium text-zinc-950 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-xs font-medium text-zinc-950 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 />
               </div>
 
@@ -383,7 +383,7 @@ export default function CategoriesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 text-xs font-extrabold bg-blue-600 text-white hover:bg-blue-700 rounded-xl disabled:opacity-50 shadow-xs shadow-blue-500/20"
+                  className="px-4 py-2 text-xs font-extrabold bg-black text-white hover:bg-zinc-800 rounded-xl disabled:opacity-50 shadow-xs"
                 >
                   {submitting ? "Saving..." : editItem ? "Update Category" : "Create Category"}
                 </button>

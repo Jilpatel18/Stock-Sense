@@ -93,6 +93,10 @@ export default function ProductsPage() {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (initialStock && parseFloat(initialStock) > 0 && !initialLocation) {
+      alert("Please select a Stock Location for the initial stock.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/products", {
@@ -114,7 +118,11 @@ export default function ProductsPage() {
         setShowAddModal(false);
         setNewName("");
         setNewSku("");
+        setNewCategory("");
+        setNewUnit("PCS");
+        setNewReorderLevel("10");
         setInitialStock("");
+        setInitialLocation("");
         fetchProducts();
       } else {
         alert("Error: " + (data.error || "Failed to create product"));
@@ -136,7 +144,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
             Product Catalog & Stock Breakdown
           </h1>
           <p className="text-xs text-zinc-600 mt-1 font-medium">
@@ -154,7 +162,7 @@ export default function ProductsPage() {
           </a>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-xs shadow-blue-500/20 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-xs transition-all"
           >
             <Plus className="w-4 h-4" /> Add New Product
           </button>
@@ -195,7 +203,7 @@ export default function ProductsPage() {
             onClick={() => setLowStockOnly(!lowStockOnly)}
             className={`px-3 py-2 text-xs font-semibold rounded-xl border flex items-center gap-1.5 transition-all ${
               lowStockOnly
-                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                ? "bg-black text-white border-black shadow-xs"
                 : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:text-zinc-950"
             }`}
           >
@@ -286,7 +294,7 @@ export default function ProductsPage() {
                         <Link
                           href={`/products/${p.id}`}
                           title="View Ledger History"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xs shadow-blue-500/20"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-black text-white hover:bg-zinc-800 transition-all shadow-xs"
                         >
                           Ledger <ChevronRight className="w-3 h-3 text-white" />
                         </Link>
@@ -503,7 +511,7 @@ export default function ProductsPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl shadow-xs disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Saving..." : "Create Product"}
                 </button>

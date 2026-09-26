@@ -381,7 +381,7 @@ export default function ValidationPreviewModal({
             type="button"
             onClick={handleConfirmSubmit}
             disabled={submitting || hasInsufficientStock || loadingPreview}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-black/20 disabled:opacity-50 flex items-center gap-1.5"
           >
             {submitting ? (
               "Validating..."

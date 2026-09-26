@@ -67,8 +67,8 @@ export default function StockLedgerHistoryPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
-            <History className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
+            <History className="w-6 h-6 text-zinc-950" />
             Stock Ledger & Audit Log
           </h1>
           <p className="text-xs text-zinc-600 mt-1 font-medium">
@@ -86,7 +86,7 @@ export default function StockLedgerHistoryPage() {
           </a>
           <button
             onClick={fetchLedger}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh Audit
           </button>

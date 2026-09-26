@@ -142,7 +142,7 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
             Operations & Executive Dashboard
           </h1>
           <p className="text-xs text-zinc-600 mt-1 font-medium">
@@ -154,25 +154,25 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/operations/receipts?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Receipt
           </Link>
           <Link
             href="/operations/deliveries?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Delivery
           </Link>
           <Link
             href="/operations/transfers?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Transfer
           </Link>
           <Link
             href="/operations/adjustments?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Adjustment
           </Link>
@@ -180,12 +180,12 @@ export default function DashboardPage() {
       </div>
 
       {actionMessage && (
-        <div className="p-3.5 rounded-xl bg-blue-600 text-white text-xs font-medium flex items-center justify-between shadow-md shadow-blue-500/20 animate-in fade-in">
+        <div className="p-3.5 rounded-xl bg-black text-white text-xs font-medium flex items-center justify-between shadow-md shadow-black/20 animate-in fade-in">
           <span className="flex items-center gap-2 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-white" />
             {actionMessage}
           </span>
-          <span className="text-[10px] text-blue-100 font-semibold">Ledger Updated</span>
+          <span className="text-[10px] text-zinc-300 font-semibold">Ledger Updated</span>
         </div>
       )}
 
@@ -369,7 +369,7 @@ export default function DashboardPage() {
             <div className="w-full bg-zinc-100 rounded-xl h-5 overflow-hidden flex border border-zinc-200 p-0.5">
               <div
                 style={{ width: `${health.healthyPercent}%` }}
-                className="bg-blue-600 h-full rounded-l-lg transition-all duration-500"
+                className="bg-black h-full rounded-l-lg transition-all duration-500"
                 title={`Healthy: ${health.healthyPercent}%`}
               />
               <div
@@ -388,7 +388,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
                 <span className="text-[10px] text-zinc-500 uppercase font-bold block">Healthy</span>
-                <span className="text-xl font-extrabold text-blue-600">{health.healthyPercent}%</span>
+                <span className="text-xl font-extrabold text-zinc-950">{health.healthyPercent}%</span>
                 <span className="text-[10px] text-zinc-500 block font-medium">({health.healthyCount} SKUs)</span>
               </div>
               <div className="p-3 bg-amber-50/40 border border-amber-200/80 rounded-xl">
@@ -417,7 +417,7 @@ export default function DashboardPage() {
         <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
             <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-              <Warehouse className="w-4 h-4 text-blue-600" />
+              <Warehouse className="w-4 h-4 text-black" />
               Stock Distribution by Warehouse
             </h2>
             <span className="text-[10px] font-bold text-zinc-500 uppercase">Live Location Sum</span>
@@ -443,7 +443,7 @@ export default function DashboardPage() {
                     </div>
                     {/* Visual Bar */}
                     <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-blue-600 h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
+                      <div className="bg-black h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
                     </div>
                   </div>
                 );
@@ -468,7 +468,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setMovementDays("7")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                movementDays === "7" ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
+                movementDays === "7" ? "bg-black text-white shadow-xs shadow-black/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
               }`}
             >
               Last 7 Days
@@ -476,7 +476,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setMovementDays("30")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                movementDays === "30" ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
+                movementDays === "30" ? "bg-black text-white shadow-xs shadow-black/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
               }`}
             >
               Last 30 Days
@@ -588,7 +588,7 @@ export default function DashboardPage() {
               <History className="w-4 h-4 text-black" />
               Recent Activity Feed
             </h2>
-            <Link href="/operations/history" className="text-xs text-blue-600 hover:text-blue-700 font-extrabold underline">
+            <Link href="/operations/history" className="text-xs text-black hover:text-zinc-800 font-extrabold underline">
               Full Ledger
             </Link>
           </div>
@@ -757,7 +757,7 @@ export default function DashboardPage() {
                       {doc.status !== "Done" && doc.status !== "Canceled" ? (
                         <button
                           onClick={() => handleOpenValidationModal(doc)}
-                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
+                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-xs shadow-black/20 transition-all"
                         >
                           Validate & Post
                         </button>

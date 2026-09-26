@@ -129,8 +129,8 @@ function ReceiptsContent() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
-            <ArrowDownRight className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
+            <ArrowDownRight className="w-6 h-6 text-zinc-950" />
             Receipts (Incoming Stock)
           </h1>
           <p className="text-xs text-zinc-600 mt-1 font-medium">
@@ -148,7 +148,7 @@ function ReceiptsContent() {
           </a>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
           >
             <Plus className="w-4 h-4" /> Create Receipt
           </button>
@@ -212,7 +212,7 @@ function ReceiptsContent() {
                       {r.status !== "Done" && r.status !== "Canceled" ? (
                         <button
                           onClick={() => handleOpenPreviewModal(r)}
-                          className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
+                          className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-xs transition-all"
                         >
                           Validate Stock
                         </button>
@@ -369,7 +369,7 @@ function ReceiptsContent() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl shadow-xs disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Creating..." : "Save Receipt"}
                 </button>

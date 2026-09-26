@@ -73,8 +73,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-blue-600 tracking-tight">{product.name}</h1>
-              <span className="text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-extrabold">
+              <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">{product.name}</h1>
+              <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-300 font-extrabold">
                 SKU: {product.sku}
               </span>
             </div>
@@ -125,7 +125,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         {/* Locations breakdown */}
         <div className="md:col-span-2 bg-white border border-zinc-200 rounded-2xl p-5 space-y-3 shadow-sm">
           <h2 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-blue-600" />
+            <Building2 className="w-4 h-4 text-black" />
             Location-Aware Stock Breakdown
           </h2>
 
@@ -179,7 +179,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
           <h2 className="text-sm font-bold text-zinc-950 flex items-center gap-2 uppercase tracking-wider">
-            <History className="w-4 h-4 text-blue-600" />
+            <History className="w-4 h-4 text-black" />
             Product Movement Timeline
           </h2>
           <div className="text-right">
@@ -206,7 +206,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               return (
                 <div key={entry.id} className="relative flex items-start justify-between gap-4 text-xs">
                   {/* Timeline bullet dot */}
-                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100" />
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-black ring-4 ring-zinc-200" />
 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     <span
                       className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
                         isPositive
-                          ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                          ? "bg-black text-white border-black shadow-xs"
                           : "bg-zinc-100 text-zinc-900 border-zinc-300"
                       }`}
                     >

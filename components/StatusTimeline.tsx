@@ -61,9 +61,9 @@ export default function StatusTimeline({ status }: StatusTimelineProps) {
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
                   isCompleted
-                    ? "bg-blue-600 text-white shadow-xs"
+                    ? "bg-black text-white shadow-xs"
                     : isCurrent
-                    ? "bg-blue-600 text-white ring-4 ring-blue-100 shadow-xs"
+                    ? "bg-black text-white ring-4 ring-zinc-200 shadow-xs"
                     : "bg-zinc-100 text-zinc-400 border border-zinc-300"
                 }`}
               >
@@ -71,7 +71,7 @@ export default function StatusTimeline({ status }: StatusTimelineProps) {
               </div>
               <span
                 className={`text-[9px] font-bold tracking-tight ${
-                  isCurrent ? "text-blue-600 underline font-extrabold" : isCompleted ? "text-zinc-800 font-bold" : "text-zinc-400"
+                  isCurrent ? "text-black underline font-extrabold" : isCompleted ? "text-zinc-800 font-bold" : "text-zinc-400"
                 }`}
               >
                 {step.label}

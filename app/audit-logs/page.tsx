@@ -82,7 +82,7 @@ export default function AuditLogsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-blue-600" /> System & Security Audit Logs
+            <ShieldAlert className="w-6 h-6 text-black" /> System & Security Audit Logs
           </h1>
           <p className="text-xs text-zinc-600 mt-1">
             Immutably track logins, security events, profile updates, and administrative resource changes.
@@ -91,7 +91,7 @@ export default function AuditLogsPage() {
 
         <button
           onClick={() => fetchLogs(pagination.page)}
-          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/10 transition-all"
+          className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh Audit Stream
         </button>
@@ -110,7 +110,7 @@ export default function AuditLogsPage() {
               className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-zinc-900 font-medium"
             />
           </div>
-          <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-xs">
+          <button type="submit" className="px-4 py-2 bg-black hover:bg-zinc-800 text-white font-semibold rounded-xl transition-colors shadow-xs">
             Search
           </button>
         </form>
@@ -120,7 +120,7 @@ export default function AuditLogsPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-semibold w-full md:w-auto text-zinc-900 focus:outline-none focus:border-blue-600"
+            className="px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-semibold w-full md:w-auto text-zinc-900 focus:outline-none focus:border-zinc-900"
           >
             <option value="All">All Audit Actions</option>
             <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
@@ -203,7 +203,7 @@ export default function AuditLogsPage() {
             <button
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => fetchLogs(pagination.page + 1)}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg disabled:opacity-40 shadow-xs"
+              className="px-3 py-1.5 bg-black hover:bg-zinc-800 text-white font-bold rounded-lg disabled:opacity-40 shadow-xs"
             >
               Next
             </button>
