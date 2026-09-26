@@ -155,9 +155,9 @@ export default function StockLedgerHistoryPage() {
                 <th className="px-4 py-3">Location & Warehouse</th>
                 <th className="px-4 py-3">Operation</th>
                 <th className="px-4 py-3">Reference No.</th>
-                <th className="px-4 py-3">Qty Before</th>
-                <th className="px-4 py-3">Qty Change</th>
-                <th className="px-4 py-3">Qty After</th>
+                <th className="px-4 py-3 text-right">Qty Before</th>
+                <th className="px-4 py-3 text-right">Qty Change</th>
+                <th className="px-4 py-3 text-right">Qty After</th>
                 <th className="px-4 py-3">Performed By</th>
               </tr>
             </thead>
@@ -192,21 +192,21 @@ export default function StockLedgerHistoryPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-900">
-                          {entry.operation_type === "RECEIPT" && <ArrowDownRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {entry.operation_type === "DELIVERY" && <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {entry.operation_type.startsWith("TRANSFER") && <ArrowLeftRight className="w-3.5 h-3.5 text-zinc-500" />}
-                          {entry.operation_type === "ADJUSTMENT" && <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-500" />}
+                          {entry.operation_type === "RECEIPT" && <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600" />}
+                          {entry.operation_type === "DELIVERY" && <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />}
+                          {entry.operation_type.startsWith("TRANSFER") && <ArrowLeftRight className="w-3.5 h-3.5 text-sky-600" />}
+                          {entry.operation_type === "ADJUSTMENT" && <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />}
                           {entry.operation_type}
                         </span>
                       </td>
                       <td className="px-4 py-3 font-mono font-bold text-zinc-950">
                         {entry.reference_number}
                       </td>
-                      <td className="px-4 py-3 font-mono text-zinc-500">{entry.quantity_before}</td>
-                      <td className="px-4 py-3 font-mono font-extrabold text-sm text-zinc-950">
+                      <td className="px-4 py-3 font-mono text-zinc-500 text-right">{entry.quantity_before}</td>
+                      <td className={`px-4 py-3 font-mono font-extrabold text-sm text-right ${change > 0 ? "text-emerald-700" : "text-rose-700"}`}>
                         {change > 0 ? `+${change}` : change} {entry.unit_of_measure}
                       </td>
-                      <td className="px-4 py-3 font-mono font-black text-zinc-950 text-sm">
+                      <td className="px-4 py-3 font-mono font-black text-zinc-950 text-sm text-right">
                         {entry.quantity_after} {entry.unit_of_measure}
                       </td>
                       <td className="px-4 py-3 text-zinc-500">{entry.performed_by_name || "System"}</td>

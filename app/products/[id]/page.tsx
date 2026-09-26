@@ -13,6 +13,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import StatusBadge from "@/components/StatusBadge";
+
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [product, setProduct] = useState<any>(null);
@@ -39,7 +41,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto p-8 text-center text-zinc-500">
+      <div className="max-w-5xl mx-auto p-8 text-center text-zinc-500 font-medium text-xs">
         Loading product detail & audit ledger...
       </div>
     );
@@ -48,13 +50,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   if (!product) {
     return (
       <div className="max-w-5xl mx-auto p-8 text-center text-zinc-400 space-y-4">
-        <p>Product not found.</p>
-        <Link href="/products" className="text-white underline text-xs">
+        <p className="text-xs font-semibold">Product not found.</p>
+        <Link href="/products" className="text-black underline text-xs font-bold">
           ← Back to products
         </Link>
       </div>
     );
   }
+
+  const isOutOfStock = parseFloat(product.total_stock) === 0;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -79,18 +83,39 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
+          <div
+            className={`flex items-center gap-3 border rounded-2xl p-4 shadow-2xs ${
+              isOutOfStock
+                ? "bg-rose-50/40 border-rose-200"
+                : product.is_low_stock
+                ? "bg-amber-50/30 border-amber-200"
+                : "bg-white border-zinc-200"
+            }`}
+          >
             <div>
               <span className="text-[11px] text-zinc-600 block font-semibold">Total Company Stock</span>
-              <span className="text-2xl font-extrabold text-zinc-950">
-                {product.total_stock} <span className="text-xs text-zinc-500 font-normal">{product.unit_of_measure}</span>
+              <span
+                className={`text-2xl font-black font-mono ${
+                  isOutOfStock
+                    ? "text-rose-700"
+                    : product.is_low_stock
+                    ? "text-amber-800"
+                    : "text-zinc-950"
+                }`}
+              >
+                {product.total_stock}{" "}
+                <span className="text-xs text-zinc-500 font-normal font-sans">{product.unit_of_measure}</span>
               </span>
             </div>
-            {product.is_low_stock && (
-              <div className="p-2 rounded-xl bg-black text-white font-bold" title="Stock at or below reorder level">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            )}
+            <div>
+              {isOutOfStock ? (
+                <StatusBadge status="Out of Stock" size="sm" />
+              ) : product.is_low_stock ? (
+                <StatusBadge status="Low Stock" size="sm" />
+              ) : (
+                <StatusBadge status="Healthy" size="sm" />
+              )}
+            </div>
           </div>
         </div>
       </div>

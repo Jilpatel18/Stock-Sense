@@ -42,8 +42,8 @@ export default function AuditLogsPage() {
   const getActionBadge = (action: string) => {
     if (action.includes("FAILED")) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-200 text-zinc-900 border border-zinc-400 flex items-center gap-1">
-          <ShieldAlert className="w-3 h-3 text-red-600" /> {action}
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+          <ShieldAlert className="w-3 h-3 text-rose-600" /> {action}
         </span>
       );
     }

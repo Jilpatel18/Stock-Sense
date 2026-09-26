@@ -222,30 +222,76 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI 3: Low-Stock Products */}
-        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
+        <div
+          className={`border rounded-2xl p-4 flex flex-col justify-between transition-colors shadow-2xs ${
+            kpis.lowStockCount > 0 ? "bg-amber-50/30 border-amber-200" : "bg-white border-zinc-200 hover:border-zinc-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-600">Low-Stock SKUs</span>
-            <div className={`p-2 rounded-xl ${kpis.lowStockCount > 0 ? "bg-black text-white font-bold" : "bg-zinc-100 text-zinc-500"}`}>
+            <span className="text-xs font-bold text-zinc-700">Low-Stock SKUs</span>
+            <div
+              className={`p-2 rounded-xl border ${
+                kpis.lowStockCount > 0
+                  ? "bg-amber-100 text-amber-800 border-amber-200"
+                  : "bg-zinc-100 text-zinc-500 border-zinc-200"
+              }`}
+            >
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold tracking-tight text-zinc-950">{kpis.lowStockCount}</p>
-            <p className="text-[11px] text-zinc-500 mt-0.5">At or below reorder threshold</p>
+          <div className="mt-3 space-y-1">
+            <div className="flex items-baseline justify-between">
+              <p className={`text-2xl font-black tracking-tight ${kpis.lowStockCount > 0 ? "text-amber-900" : "text-zinc-950"}`}>
+                {kpis.lowStockCount}
+              </p>
+              {kpis.lowStockCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
+                  Reorder Alert
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-zinc-500 font-medium">
+              {kpis.lowStockCount > 0 ? "At or below reorder threshold" : "Stock levels healthy"}
+            </p>
           </div>
         </div>
 
         {/* KPI 4: Out-of-Stock Products */}
-        <div className="bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-400 transition-colors shadow-sm">
+        <div
+          className={`border rounded-2xl p-4 flex flex-col justify-between transition-colors shadow-2xs ${
+            kpis.outOfStockCount > 0 ? "bg-rose-50/40 border-rose-200" : "bg-white border-zinc-200 hover:border-zinc-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-600">Out of Stock SKUs</span>
-            <div className={`p-2 rounded-xl ${kpis.outOfStockCount > 0 ? "bg-black text-white font-bold" : "bg-zinc-100 text-zinc-500"}`}>
-              <XCircle className="w-4 h-4" />
+            <span className="text-xs font-bold text-zinc-700">Out of Stock SKUs</span>
+            <div
+              className={`p-2 rounded-xl border ${
+                kpis.outOfStockCount > 0
+                  ? "bg-rose-100 text-rose-700 border-rose-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {kpis.outOfStockCount > 0 ? <XCircle className="w-4 h-4" /> : <PackageCheck className="w-4 h-4" />}
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold tracking-tight text-zinc-950">{kpis.outOfStockCount}</p>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Zero stock balance</p>
+          <div className="mt-3 space-y-1">
+            <div className="flex items-baseline justify-between">
+              <p className={`text-2xl font-black tracking-tight ${kpis.outOfStockCount > 0 ? "text-rose-700" : "text-zinc-950"}`}>
+                {kpis.outOfStockCount}
+              </p>
+              {kpis.outOfStockCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                  Critical
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Optimal
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-zinc-500 font-medium">
+              {kpis.outOfStockCount > 0 ? "Products requiring replenishment" : "All tracked products available"}
+            </p>
           </div>
         </div>
 

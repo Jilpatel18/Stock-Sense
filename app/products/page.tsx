@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import StatusBadge from "@/components/StatusBadge";
 import {
   Package,
   Plus,
@@ -242,18 +243,22 @@ export default function ProductsPage() {
                     <td className="px-4 py-3 uppercase text-[11px] font-mono text-zinc-500">{p.unit_of_measure}</td>
                     <td className="px-4 py-3 font-mono text-zinc-700">{p.reorder_level}</td>
                     <td className="px-4 py-3">
-                      <span className="font-extrabold text-sm text-zinc-950">{p.total_stock}</span>{" "}
-                      <span className="text-[10px] text-zinc-500">{p.unit_of_measure}</span>
+                      {parseFloat(p.total_stock) === 0 ? (
+                        <span className="font-extrabold text-sm text-rose-600 font-mono">0</span>
+                      ) : p.is_low_stock ? (
+                        <span className="font-extrabold text-sm text-amber-600 font-mono">{p.total_stock}</span>
+                      ) : (
+                        <span className="font-extrabold text-sm text-zinc-950 font-mono">{p.total_stock}</span>
+                      )}{" "}
+                      <span className="text-[10px] text-zinc-500 font-mono">{p.unit_of_measure}</span>
                     </td>
                     <td className="px-4 py-3">
-                      {p.is_low_stock ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 bg-zinc-100 border border-zinc-400 px-2 py-0.5 rounded-full">
-                          <AlertTriangle className="w-3 h-3 text-black" /> Low Stock
-                        </span>
+                      {parseFloat(p.total_stock) === 0 ? (
+                        <StatusBadge status="Out of Stock" size="sm" />
+                      ) : p.is_low_stock ? (
+                        <StatusBadge status="Low Stock" size="sm" />
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-full">
-                          Normal
-                        </span>
+                        <StatusBadge status="Healthy" size="sm" />
                       )}
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">

@@ -212,8 +212,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const navItems = [
+  const overviewItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  ];
+
+  const catalogItems = [
     { name: "Products", href: "/products", icon: Package },
     { name: "Categories", href: "/categories", icon: Tag },
   ];
@@ -226,8 +229,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Stock Ledger / History", href: "/operations/history", icon: History },
   ];
 
-  const secondaryItems = [
+  const locationItems = [
     { name: "Warehouses & Locations", href: "/warehouses", icon: Warehouse },
+  ];
+
+  const systemItems = [
     { name: "Settings Module", href: "/settings", icon: Settings },
     { name: "Security Audit Log", href: "/audit-logs", icon: ShieldAlert },
   ];
@@ -279,12 +285,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               onFocus={() => {
                 if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
               }}
-              placeholder="Global Search (Product, SKU, Warehouse, Location, Receipt, Delivery)..."
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400"
+              placeholder="Search inventory (Product, SKU, Warehouse)..."
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 pl-3 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400"
             />
-            {searchLoading && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 font-mono">
+            {searchLoading ? (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 font-mono animate-pulse">
                 ...
+              </span>
+            ) : (
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-zinc-200/80 text-zinc-600 font-mono text-[10px] font-extrabold pointer-events-none border border-zinc-300/60">
+                ⌘K
               </span>
             )}
           </div>
@@ -535,13 +545,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }`}
         >
           <div className="p-4 flex-1 overflow-y-auto space-y-6">
-            {/* Main Nav */}
+            {/* OVERVIEW Nav */}
             <div>
-              <p className="px-3 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                Main
+              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+                Overview
               </p>
               <nav className="space-y-1">
-                {navItems.map((item) => {
+                {overviewItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link
@@ -550,7 +560,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-sm"
+                          ? "bg-black text-white font-extrabold shadow-xs"
                           : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
                       }`}
                     >
@@ -562,11 +572,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </nav>
             </div>
 
-            {/* Operations Collapsible */}
+            {/* CATALOG Nav */}
+            <div>
+              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+                Catalog
+              </p>
+              <nav className="space-y-1">
+                {catalogItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-black text-white font-extrabold shadow-xs"
+                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                      }`}
+                    >
+                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* OPERATIONS Nav */}
             <div>
               <div
                 onClick={() => setOperationsOpen(!operationsOpen)}
-                className="px-3 flex items-center justify-between text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 cursor-pointer hover:text-black"
+                className="px-3 flex items-center justify-between text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5 cursor-pointer hover:text-black"
               >
                 <span>Operations</span>
                 <ChevronDown
@@ -584,7 +621,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
                           isActive
-                            ? "bg-black text-white font-extrabold shadow-sm"
+                            ? "bg-black text-white font-extrabold shadow-xs"
                             : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
                         }`}
                       >
@@ -597,13 +634,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {/* System Nav */}
+            {/* LOCATION Nav */}
             <div>
-              <p className="px-3 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                System
+              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+                Location
               </p>
               <nav className="space-y-1">
-                {secondaryItems.map((item) => {
+                {locationItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link
@@ -612,7 +649,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-sm"
+                          ? "bg-black text-white font-extrabold shadow-xs"
+                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                      }`}
+                    >
+                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* SYSTEM Nav */}
+            <div>
+              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+                System
+              </p>
+              <nav className="space-y-1">
+                {systemItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-black text-white font-extrabold shadow-xs"
                           : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
                       }`}
                     >
