@@ -138,12 +138,21 @@ function ReceiptsContent() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" /> Create Receipt
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <a
+            href="/api/operations/receipts/export"
+            download
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-zinc-100 text-zinc-900 hover:bg-zinc-200 border border-zinc-300 shadow-xs transition-all"
+          >
+            Export CSV
+          </a>
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+          >
+            <Plus className="w-4 h-4" /> Create Receipt
+          </button>
+        </div>
       </div>
 
       {/* Receipts Table */}
