@@ -126,11 +126,11 @@ function AdjustmentsContent() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            <SlidersHorizontal className="w-6 h-6 text-black" />
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+            <SlidersHorizontal className="w-6 h-6 text-blue-600" />
             Inventory Adjustments (Stock Reconciliation)
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Reconcile recorded system inventory against physical stock counts or damaged goods.
           </p>
         </div>
@@ -145,7 +145,7 @@ function AdjustmentsContent() {
           </a>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
           >
             <Plus className="w-4 h-4" /> Create Stock Adjustment
           </button>
@@ -156,7 +156,7 @@ function AdjustmentsContent() {
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100 text-zinc-700 border-b border-zinc-200 font-bold text-[11px]">
+            <thead className="bg-zinc-100/90 text-zinc-900 border-b border-zinc-200 font-extrabold text-[11px] uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">Adjustment No.</th>
                 <th className="px-4 py-3">Location</th>
@@ -170,13 +170,13 @@ function AdjustmentsContent() {
             <tbody className="divide-y divide-zinc-200 text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     Loading inventory adjustments...
                   </td>
                 </tr>
               ) : adjustments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     No stock adjustments recorded. Click "Create Stock Adjustment" to perform audit count.
                   </td>
                 </tr>
@@ -185,20 +185,20 @@ function AdjustmentsContent() {
                   <tr key={a.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="px-4 py-3 font-mono font-bold text-zinc-950">{a.adjustment_number}</td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-zinc-950">{a.location_name}</span>
-                      <span className="text-[10px] text-zinc-500 block">{a.warehouse_name}</span>
+                      <span className="font-bold text-zinc-950">{a.location_name}</span>
+                      <span className="text-[10px] text-zinc-600 font-medium block">{a.warehouse_name}</span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-600">{a.reason || "Physical Stock Count"}</td>
+                    <td className="px-4 py-3 text-zinc-900 font-semibold">{a.reason || "Physical Stock Count"}</td>
                     <td className="px-4 py-3">
                       <div className="space-y-0.5">
                         {a.items?.map((item: any) => {
                           const diff = parseFloat(item.difference);
                           return (
                             <div key={item.id} className="text-[11px]">
-                              <span className="font-semibold text-zinc-950">{item.product_name}</span>:{" "}
-                              <span>Counted: <strong>{item.counted_quantity}</strong></span>{" "}
+                              <span className="font-bold text-zinc-950">{item.product_name}</span>:{" "}
+                              <span>Counted: <strong className="text-zinc-950">{item.counted_quantity}</strong></span>{" "}
                               {a.status === "Done" && (
-                                <span className="font-mono text-[10px] text-zinc-600 font-bold">
+                                <span className="font-mono text-[10px] text-zinc-700 font-extrabold">
                                   (Diff: {diff > 0 ? `+${diff}` : diff})
                                 </span>
                               )}
@@ -210,14 +210,14 @@ function AdjustmentsContent() {
                     <td className="px-4 py-3">
                       <StatusBadge status={a.status} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 font-mono text-[11px]">
+                    <td className="px-4 py-3 text-zinc-700 font-mono text-[11px] font-bold">
                       {new Date(a.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {a.status !== "Done" && a.status !== "Canceled" ? (
                         <button
                           onClick={() => handleOpenPreviewModal(a)}
-                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+                          className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
                         >
                           Validate Adjustment
                         </button>
@@ -371,7 +371,7 @@ function AdjustmentsContent() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Creating..." : "Save Adjustment"}
                 </button>

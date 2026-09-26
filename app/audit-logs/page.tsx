@@ -40,22 +40,37 @@ export default function AuditLogsPage() {
   };
 
   const getActionBadge = (action: string) => {
-    if (action.includes("FAILED")) {
+    const act = (action || "").toUpperCase();
+    if (act.includes("FAILED")) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
-          <ShieldAlert className="w-3 h-3 text-rose-600" /> {action}
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 inline-flex items-center gap-1.5 whitespace-nowrap">
+          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" /> {action}
         </span>
       );
     }
-    if (action.includes("LOGIN") || action.includes("SIGNUP") || action.includes("OTP") || action.includes("PASSWORD")) {
+    if (act.includes("LOGIN") || act.includes("SIGNUP") || act.includes("OTP") || act.includes("PASSWORD")) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-black text-white flex items-center gap-1">
-          <Key className="w-3 h-3 text-white" /> {action}
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-flex items-center gap-1.5 whitespace-nowrap">
+          <Key className="w-3.5 h-3.5 text-emerald-600" /> {action}
+        </span>
+      );
+    }
+    if (act.includes("CREATE")) {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200 inline-flex items-center gap-1.5 whitespace-nowrap">
+          <Package className="w-3.5 h-3.5 text-zinc-700" /> {action}
+        </span>
+      );
+    }
+    if (act.includes("UPDATE")) {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 inline-flex items-center gap-1.5 whitespace-nowrap">
+          <Settings className="w-3.5 h-3.5 text-amber-600" /> {action}
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-900 border border-zinc-300">
+      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200 inline-flex items-center gap-1.5 whitespace-nowrap">
         {action}
       </span>
     );
@@ -66,8 +81,8 @@ export default function AuditLogsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-black" /> System & Security Audit Logs
+          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+            <ShieldAlert className="w-6 h-6 text-blue-600" /> System & Security Audit Logs
           </h1>
           <p className="text-xs text-zinc-600 mt-1">
             Immutably track logins, security events, profile updates, and administrative resource changes.
@@ -76,7 +91,7 @@ export default function AuditLogsPage() {
 
         <button
           onClick={() => fetchLogs(pagination.page)}
-          className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm"
+          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/10 transition-all"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh Audit Stream
         </button>
@@ -92,10 +107,10 @@ export default function AuditLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by action, email, or user name..."
-              className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-black font-medium"
+              className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-zinc-900 font-medium"
             />
           </div>
-          <button type="submit" className="px-4 py-2 bg-black text-white font-bold rounded-xl">
+          <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-xs">
             Search
           </button>
         </form>
@@ -105,7 +120,7 @@ export default function AuditLogsPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-bold w-full md:w-auto"
+            className="px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-semibold w-full md:w-auto text-zinc-900 focus:outline-none focus:border-blue-600"
           >
             <option value="All">All Audit Actions</option>
             <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
@@ -126,7 +141,7 @@ export default function AuditLogsPage() {
       {/* Audit Log Table */}
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-xs">
         <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-600 uppercase">
+          <thead className="bg-zinc-50/80 border-b border-zinc-200 font-semibold text-zinc-600 text-[11px] uppercase tracking-wider">
             <tr>
               <th className="p-3.5">Timestamp</th>
               <th className="p-3.5">Action</th>
@@ -144,25 +159,25 @@ export default function AuditLogsPage() {
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-zinc-400 font-bold">
+                <td colSpan={5} className="p-8 text-center text-zinc-400 font-semibold">
                   No security or administrative audit records found.
                 </td>
               </tr>
             ) : (
               logs.map((log) => (
-                <tr key={log.id} className="hover:bg-zinc-50/50 transition-colors">
-                  <td className="p-3.5 font-mono text-zinc-500 text-[11px] whitespace-nowrap">
+                <tr key={log.id} className="hover:bg-zinc-50/60 transition-colors">
+                  <td className="p-3.5 text-zinc-500 text-[11px] whitespace-nowrap">
                     {new Date(log.created_at).toLocaleString()}
                   </td>
-                  <td className="p-3.5">{getActionBadge(log.action)}</td>
-                  <td className="p-3.5">
-                    <p className="font-bold text-zinc-950">{log.user_name || log.user_email || "System/Guest"}</p>
-                    {log.user_email && <p className="text-[10px] text-zinc-500 font-mono">{log.user_email}</p>}
+                  <td className="p-3.5 whitespace-nowrap">{getActionBadge(log.action)}</td>
+                  <td className="p-3.5 whitespace-nowrap">
+                    <p className="font-semibold text-zinc-950">{log.user_name || log.user_email || "System/Guest"}</p>
+                    {log.user_email && <p className="text-[10px] text-zinc-500 mt-0.5">{log.user_email}</p>}
                   </td>
-                  <td className="p-3.5 font-mono text-[11px]">
+                  <td className="p-3.5 text-[11px] text-zinc-700 whitespace-nowrap font-medium">
                     {log.entity_type ? `${log.entity_type} #${log.entity_id || ""}` : "—"}
                   </td>
-                  <td className="p-3.5 font-mono text-[11px] text-zinc-600">
+                  <td className="p-3.5 text-[11px] text-zinc-600">
                     {log.details ? JSON.stringify(log.details) : "—"}
                   </td>
                 </tr>
@@ -188,7 +203,7 @@ export default function AuditLogsPage() {
             <button
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => fetchLogs(pagination.page + 1)}
-              className="px-3 py-1.5 bg-black text-white font-bold rounded-lg disabled:opacity-40"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg disabled:opacity-40 shadow-xs"
             >
               Next
             </button>

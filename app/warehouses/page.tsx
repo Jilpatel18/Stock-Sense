@@ -112,18 +112,18 @@ export default function WarehousesPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            <Warehouse className="w-6 h-6 text-black" />
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+            <Warehouse className="w-6 h-6 text-blue-600" />
             Warehouse & Location Management
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Define multi-warehouse structures, storage racks, production floors, and dispatch zones.
           </p>
         </div>
 
         <button
           onClick={() => setShowWhModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-xs shadow-blue-500/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" /> Add Warehouse
         </button>
@@ -131,9 +131,9 @@ export default function WarehousesPage() {
 
       {/* Warehouses Grid */}
       {loading ? (
-        <div className="text-center py-12 text-zinc-500 text-xs">Loading warehouses & locations...</div>
+        <div className="text-center py-12 text-zinc-500 text-xs font-bold">Loading warehouses & locations...</div>
       ) : warehouses.length === 0 ? (
-        <div className="text-center py-12 text-zinc-500 text-xs bg-white border border-zinc-200 rounded-2xl shadow-sm">
+        <div className="text-center py-12 text-zinc-500 text-xs bg-white border border-zinc-200 rounded-2xl shadow-sm font-bold">
           No warehouses found. Click &quot;Add Warehouse&quot; to build your facility hierarchy.
         </div>
       ) : (
@@ -141,16 +141,16 @@ export default function WarehousesPage() {
           {warehouses.map((wh) => (
             <div
               key={wh.id}
-              className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm hover:border-zinc-400 transition-colors"
+              className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm hover:border-blue-600 transition-colors"
             >
               <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-zinc-100 text-zinc-900 border border-zinc-200">
+                  <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-zinc-950">{wh.name}</h3>
-                    <p className="text-xs text-zinc-500 font-mono">Code: {wh.code}</p>
+                    <h3 className="font-extrabold text-base text-zinc-950">{wh.name}</h3>
+                    <p className="text-xs text-zinc-600 font-mono font-bold">Code: {wh.code}</p>
                   </div>
                 </div>
 
@@ -159,7 +159,7 @@ export default function WarehousesPage() {
                     setSelectedWhId(wh.id);
                     setShowLocModal(true);
                   }}
-                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 transition-colors flex items-center gap-1 shadow-sm"
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all flex items-center gap-1 shadow-xs shadow-blue-500/20"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Location
                 </button>
@@ -262,7 +262,7 @@ export default function WarehousesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Saving..." : "Create Warehouse"}
                 </button>
@@ -333,7 +333,7 @@ export default function WarehousesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Saving..." : "Create Location"}
                 </button>

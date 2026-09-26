@@ -45,7 +45,7 @@ export default function StatusTimeline({ status }: StatusTimelineProps) {
 
   return (
     <div className="space-y-1.5 w-full">
-      <div className="text-[10px] uppercase font-mono font-bold text-zinc-600 tracking-wider">
+      <div className="text-[10px] uppercase font-bold text-zinc-600 tracking-wider">
         Lifecycle State
       </div>
       <div className="flex items-center justify-between w-full relative">
@@ -59,19 +59,19 @@ export default function StatusTimeline({ status }: StatusTimelineProps) {
           return (
             <div key={step.key} className="relative z-10 flex flex-col items-center gap-1 bg-white px-1">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-black transition-all ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
                   isCompleted
-                    ? "bg-black text-white"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : isCurrent
-                    ? "bg-zinc-950 text-white ring-4 ring-zinc-200"
+                    ? "bg-blue-600 text-white ring-4 ring-blue-100 shadow-xs"
                     : "bg-zinc-100 text-zinc-400 border border-zinc-300"
                 }`}
               >
                 {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
               </div>
               <span
-                className={`text-[9px] font-mono font-bold tracking-tight ${
-                  isCurrent ? "text-zinc-950 underline" : isCompleted ? "text-zinc-800" : "text-zinc-400"
+                className={`text-[9px] font-bold tracking-tight ${
+                  isCurrent ? "text-blue-600 underline font-extrabold" : isCompleted ? "text-zinc-800 font-bold" : "text-zinc-400"
                 }`}
               >
                 {step.label}

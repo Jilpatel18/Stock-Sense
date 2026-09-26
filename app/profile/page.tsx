@@ -115,7 +115,7 @@ export default function ProfilePage() {
     return (
       <div className="max-w-md mx-auto py-12 text-center text-zinc-400 space-y-4">
         <p className="text-xs font-semibold">You are not logged in.</p>
-        <Link href="/login" className="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold inline-block">
+        <Link href="/login" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold inline-block shadow-xs">
           Log In
         </Link>
       </div>
@@ -130,12 +130,12 @@ export default function ProfilePage() {
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-lg font-black uppercase shadow-sm shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-lg font-black uppercase shadow-md shadow-blue-500/20 shrink-0">
               {getInitials(user.name, user.email)}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-950 tracking-tight">{user.name || user.email}</h1>
-              <p className="text-xs text-zinc-600 flex items-center gap-1.5 mt-0.5 font-mono">
+              <h1 className="text-xl font-extrabold text-blue-600 tracking-tight">{user.name || user.email}</h1>
+              <p className="text-xs text-zinc-600 flex items-center gap-1.5 mt-0.5 font-medium">
                 <Mail className="w-3.5 h-3.5 text-zinc-500" />
                 {user.email}
               </p>
@@ -143,7 +143,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-black text-white">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-blue-600 text-white shadow-xs shadow-blue-500/20">
               {isManager ? <Shield className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
               {formatRole(user.role)}
             </span>
@@ -162,19 +162,19 @@ export default function ProfilePage() {
       {/* Edit Profile Form */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-5 shadow-sm">
         <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
-          <User className="w-4 h-4 text-black" /> Update Profile & Security
+          <User className="w-4 h-4 text-blue-600" /> Update Profile & Security
         </h2>
 
         {message && (
-          <div className="p-3.5 rounded-xl bg-zinc-100 border border-zinc-300 text-zinc-950 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-black shrink-0" />
+          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{message}</span>
           </div>
         )}
 
         {error && (
-          <div className="p-3.5 rounded-xl bg-zinc-100 border border-zinc-300 text-zinc-950 text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-black shrink-0" />
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -188,7 +188,7 @@ export default function ProfilePage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-medium focus:outline-none focus:border-black"
+                className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl font-medium focus:outline-none focus:border-blue-600"
               />
             </div>
 
@@ -198,7 +198,7 @@ export default function ProfilePage() {
                 type="email"
                 disabled
                 value={user.email}
-                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-500 rounded-xl font-mono cursor-not-allowed"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-500 rounded-xl font-medium cursor-not-allowed"
               />
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function ProfilePage() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Required for password change"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-blue-600"
                 />
               </div>
 
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Min 6 characters"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-blue-600"
                 />
               </div>
 
@@ -238,7 +238,7 @@ export default function ProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter new password"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-black"
+                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-300 rounded-xl focus:outline-none focus:border-blue-600"
                 />
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 bg-black hover:bg-zinc-800 text-white font-extrabold rounded-xl transition-all disabled:opacity-50"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl transition-all disabled:opacity-50 shadow-xs shadow-blue-500/20"
             >
               {saving ? "Saving Changes..." : "Save Profile Updates"}
             </button>

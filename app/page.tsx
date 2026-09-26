@@ -49,13 +49,13 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 lg:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Boxes className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-extrabold text-lg text-black tracking-tight flex items-center gap-1.5">
-                Stock<span className="text-zinc-600 font-semibold">Sense</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-800 border border-zinc-300">
+              <span className="font-extrabold text-lg text-blue-600 tracking-tight flex items-center gap-1.5">
+                Stock<span className="text-zinc-800 font-bold">Sense</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                   IMS
                 </span>
               </span>
@@ -64,11 +64,11 @@ export default function LandingPage() {
 
           {/* Desktop Nav Items */}
           <div className="hidden md:flex items-center gap-8 text-xs font-bold text-zinc-600">
-            <a href="#product" className="hover:text-black transition-colors">Product</a>
-            <a href="#how-it-works" className="hover:text-black transition-colors">How It Works</a>
-            <a href="#features" className="hover:text-black transition-colors">Features</a>
-            <a href="#security" className="hover:text-black transition-colors">Security</a>
-            <a href="#ledger" className="hover:text-black transition-colors">Ledger & Audit</a>
+            <a href="#product" className="hover:text-blue-600 transition-colors">Product</a>
+            <a href="#how-it-works" className="hover:text-blue-600 transition-colors">How It Works</a>
+            <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
+            <a href="#security" className="hover:text-blue-600 transition-colors">Security</a>
+            <a href="#ledger" className="hover:text-blue-600 transition-colors">Ledger & Audit</a>
           </div>
 
           {/* Action CTAs */}
@@ -77,13 +77,13 @@ export default function LandingPage() {
               <>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-xs font-bold text-zinc-800 hover:text-black transition-colors"
+                  className="px-4 py-2 text-xs font-bold text-zinc-800 hover:text-blue-600 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-xs font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs shadow-blue-500/20 transition-all flex items-center gap-1.5"
                 >
                   <span>Open StockSense</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -92,7 +92,7 @@ export default function LandingPage() {
             ) : (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 text-xs font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs shadow-blue-500/20 transition-all flex items-center gap-1.5"
               >
                 <span>Go to Dashboard</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href={user ? "/dashboard" : "/login"}
-              className="w-full sm:w-auto px-7 py-3.5 text-sm font-extrabold text-white bg-black hover:bg-zinc-800 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-7 py-3.5 text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group"
             >
               <span>{user ? "Go to Dashboard" : "Open StockSense"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -341,20 +341,20 @@ export default function LandingPage() {
                   </div>
 
                   {/* Stock Ledger Verification Box (1 Column) */}
-                  <div className="p-4 rounded-xl bg-black text-white space-y-4 flex flex-col justify-between">
+                  <div className="p-4 rounded-xl bg-blue-600 text-white space-y-4 flex flex-col justify-between shadow-md">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                      <span className="text-[10px] uppercase font-bold text-blue-100 tracking-wider">
                         Immutable Ledger Proof
                       </span>
                       <h4 className="text-sm font-black text-white mt-1">Steel Rod Formula</h4>
-                      <div className="mt-3 p-3 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs space-y-1.5 text-zinc-300">
-                        <div className="flex justify-between"><span>Receipt REC-00001:</span><span className="text-emerald-400">+100 KG</span></div>
-                        <div className="flex justify-between"><span>Transfer TRF-00001:</span><span className="text-sky-400">0 Net</span></div>
-                        <div className="flex justify-between"><span>Delivery DEL-00001:</span><span className="text-purple-400">-20 KG</span></div>
-                        <div className="flex justify-between"><span>Adjustment ADJ-00001:</span><span className="text-amber-400">-3 KG</span></div>
-                        <div className="pt-2 border-t border-zinc-800 flex justify-between font-bold text-white">
+                      <div className="mt-3 p-3 rounded-lg bg-blue-700/80 border border-blue-500/30 text-xs space-y-1.5 text-blue-50 font-medium">
+                        <div className="flex justify-between"><span>Receipt REC-00001:</span><span className="text-emerald-300 font-bold">+100 KG</span></div>
+                        <div className="flex justify-between"><span>Transfer TRF-00001:</span><span className="text-sky-200 font-bold">0 Net</span></div>
+                        <div className="flex justify-between"><span>Delivery DEL-00001:</span><span className="text-purple-200 font-bold">-20 KG</span></div>
+                        <div className="flex justify-between"><span>Adjustment ADJ-00001:</span><span className="text-amber-200 font-bold">-3 KG</span></div>
+                        <div className="pt-2 border-t border-blue-500/40 flex justify-between font-extrabold text-white">
                           <span>Verified Total:</span>
-                          <span className="text-emerald-400">77 KG</span>
+                          <span className="text-emerald-300">77 KG</span>
                         </div>
                       </div>
                     </div>
@@ -471,12 +471,12 @@ export default function LandingPage() {
               <div className="text-zinc-400 font-bold rotate-90 md:rotate-0">→</div>
 
               {/* Node 4 */}
-              <div className="flex-1 p-4 rounded-xl bg-black text-white space-y-1.5 w-full shadow-md">
-                <span className="text-[10px] font-extrabold uppercase text-emerald-400 bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">
+              <div className="flex-1 p-4 rounded-xl bg-blue-600 text-white space-y-1.5 w-full shadow-md">
+                <span className="text-[10px] font-extrabold uppercase text-white bg-blue-700 px-2 py-0.5 rounded border border-blue-500/50">
                   Step 04
                 </span>
                 <p className="text-sm font-black text-white">STOCK LEDGER</p>
-                <p className="text-[11px] text-zinc-400 font-sans">Immutable History Log</p>
+                <p className="text-[11px] text-blue-100 font-sans font-medium">Immutable History Log</p>
               </div>
             </div>
           </div>
@@ -890,26 +890,26 @@ export default function LandingPage() {
       {/* -------------------------------------------------- */}
       {/* 11. FINAL CTA SECTION */}
       {/* -------------------------------------------------- */}
-      <section className="py-20 px-4 lg:px-8 bg-black text-white text-center">
+      <section className="py-20 px-4 lg:px-8 bg-blue-600 text-white text-center">
         <div className="max-w-4xl mx-auto space-y-6">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white">
             Bring every inventory movement into one system.
           </h2>
-          <p className="text-base sm:text-lg text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-blue-100 font-medium max-w-2xl mx-auto leading-relaxed">
             Track stock across warehouses, validate operations, and keep a complete history of what changed, when, and why.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <Link
               href="/dashboard"
-              className="w-full sm:w-auto px-8 py-4 text-sm font-extrabold text-black bg-white hover:bg-zinc-100 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-8 py-4 text-sm font-extrabold text-blue-700 bg-white hover:bg-blue-50 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
             >
               <span>Open StockSense</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               href="/login"
-              className="w-full sm:w-auto px-8 py-4 text-sm font-bold text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-zinc-800 transition-colors text-center"
+              className="w-full sm:w-auto px-8 py-4 text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-xl border border-blue-500/50 transition-colors text-center shadow-sm"
             >
               Sign In to Demo Account
             </Link>
@@ -923,11 +923,11 @@ export default function LandingPage() {
       <footer className="mt-auto border-t border-zinc-200 bg-white px-4 lg:px-8 py-10 text-xs text-zinc-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-black text-white flex items-center justify-center font-black">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black shadow-xs">
               <Boxes className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="font-extrabold text-sm text-black tracking-tight">StockSense IMS</span>
+              <span className="font-extrabold text-sm text-blue-600 tracking-tight">StockSense IMS</span>
               <p className="text-[11px] text-zinc-500">Inventory management with transactional accuracy and auditability.</p>
             </div>
           </div>

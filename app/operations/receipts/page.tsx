@@ -129,11 +129,11 @@ function ReceiptsContent() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            <ArrowDownRight className="w-6 h-6 text-black" />
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+            <ArrowDownRight className="w-6 h-6 text-blue-600" />
             Receipts (Incoming Stock)
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Receive goods from suppliers. Stock increases atomically upon document validation.
           </p>
         </div>
@@ -148,7 +148,7 @@ function ReceiptsContent() {
           </a>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
           >
             <Plus className="w-4 h-4" /> Create Receipt
           </button>
@@ -159,7 +159,7 @@ function ReceiptsContent() {
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100 text-zinc-700 border-b border-zinc-200 font-bold text-[11px]">
+            <thead className="bg-zinc-100/90 text-zinc-900 border-b border-zinc-200 font-extrabold text-[11px] uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">Receipt No.</th>
                 <th className="px-4 py-3">Supplier</th>
@@ -173,31 +173,31 @@ function ReceiptsContent() {
             <tbody className="divide-y divide-zinc-200 text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     Loading receipts...
                   </td>
                 </tr>
               ) : receipts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     No receipts recorded. Click "Create Receipt" to log incoming goods.
                   </td>
                 </tr>
               ) : (
                 receipts.map((r) => (
                   <tr key={r.id} className="hover:bg-zinc-50 transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold text-zinc-950">{r.receipt_number}</td>
-                    <td className="px-4 py-3 text-zinc-700">{r.supplier_name || "Direct Vendor"}</td>
+                    <td className="px-4 py-3 font-bold text-zinc-950">{r.receipt_number}</td>
+                    <td className="px-4 py-3 text-zinc-900 font-semibold">{r.supplier_name || "Direct Vendor"}</td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-zinc-950">{r.destination_location_name}</span>
-                      <span className="text-[10px] text-zinc-500 block">{r.warehouse_name}</span>
+                      <span className="font-bold text-zinc-950">{r.destination_location_name}</span>
+                      <span className="text-[10px] text-zinc-600 font-medium block">{r.warehouse_name}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="space-y-0.5">
                         {r.items?.map((item: any) => (
                           <div key={item.id} className="text-[11px]">
-                            <span className="font-semibold text-zinc-950">{item.product_name}</span>:{" "}
-                            <span className="font-mono text-zinc-950 font-bold">+{item.quantity} {item.unit_of_measure}</span>
+                            <span className="font-bold text-zinc-950">{item.product_name}</span>:{" "}
+                            <span className="text-zinc-950 font-black">+{item.quantity} {item.unit_of_measure}</span>
                           </div>
                         ))}
                       </div>
@@ -205,20 +205,20 @@ function ReceiptsContent() {
                     <td className="px-4 py-3">
                       <StatusBadge status={r.status} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 font-mono text-[11px]">
+                    <td className="px-4 py-3 text-zinc-700 text-[11px] font-bold">
                       {new Date(r.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {r.status !== "Done" && r.status !== "Canceled" ? (
                         <button
                           onClick={() => handleOpenPreviewModal(r)}
-                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+                          className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
                         >
                           Validate Stock
                         </button>
                       ) : (
-                        <span className="text-[11px] text-zinc-500 font-mono flex items-center justify-end gap-1 font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-black" /> Stock Increased
+                        <span className="text-[11px] text-zinc-600 flex items-center justify-end gap-1 font-bold">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Stock Increased
                         </span>
                       )}
                     </td>
@@ -369,7 +369,7 @@ function ReceiptsContent() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Creating..." : "Save Receipt"}
                 </button>

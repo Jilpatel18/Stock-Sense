@@ -67,11 +67,11 @@ export default function StockLedgerHistoryPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
-            <History className="w-6 h-6 text-black" />
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+            <History className="w-6 h-6 text-blue-600" />
             Stock Ledger & Audit Log
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Complete, immutable chronological record of every inventory movement and adjustment
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function StockLedgerHistoryPage() {
           </a>
           <button
             onClick={fetchLedger}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh Audit
           </button>
@@ -148,7 +148,7 @@ export default function StockLedgerHistoryPage() {
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100 text-zinc-700 border-b border-zinc-200 font-bold text-[11px]">
+            <thead className="bg-zinc-100/90 text-zinc-900 border-b border-zinc-200 font-extrabold text-[11px] uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">Timestamp</th>
                 <th className="px-4 py-3">Product Name & SKU</th>
@@ -164,13 +164,13 @@ export default function StockLedgerHistoryPage() {
             <tbody className="divide-y divide-zinc-200 text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     Querying immutable ledger entries...
                   </td>
                 </tr>
               ) : ledger.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-zinc-500 font-bold">
                     No ledger entries found. Validate an operational document to create stock movements.
                   </td>
                 </tr>
@@ -179,19 +179,19 @@ export default function StockLedgerHistoryPage() {
                   const change = parseFloat(entry.quantity_change);
                   return (
                     <tr key={entry.id} className="hover:bg-zinc-50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-[11px] text-zinc-500">
+                      <td className="px-4 py-3 text-[11px] text-zinc-700 font-bold">
                         {new Date(entry.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-bold text-zinc-950 block">{entry.product_name}</span>
-                        <span className="font-mono text-[10px] text-zinc-500">SKU: {entry.sku}</span>
+                        <span className="font-extrabold text-zinc-950 block">{entry.product_name}</span>
+                        <span className="text-[10px] text-zinc-700 font-bold">SKU: {entry.sku}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-zinc-950">{entry.location_name}</span>
-                        <span className="text-[10px] text-zinc-500 block">{entry.warehouse_name}</span>
+                        <span className="font-bold text-zinc-950">{entry.location_name}</span>
+                        <span className="text-[10px] text-zinc-600 font-medium block">{entry.warehouse_name}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-900">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-zinc-950">
                           {entry.operation_type === "RECEIPT" && <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600" />}
                           {entry.operation_type === "DELIVERY" && <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />}
                           {entry.operation_type.startsWith("TRANSFER") && <ArrowLeftRight className="w-3.5 h-3.5 text-sky-600" />}
@@ -199,17 +199,17 @@ export default function StockLedgerHistoryPage() {
                           {entry.operation_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono font-bold text-zinc-950">
+                      <td className="px-4 py-3 font-extrabold text-zinc-950">
                         {entry.reference_number}
                       </td>
-                      <td className="px-4 py-3 font-mono text-zinc-500 text-right">{entry.quantity_before}</td>
-                      <td className={`px-4 py-3 font-mono font-extrabold text-sm text-right ${change > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                      <td className="px-4 py-3 text-zinc-800 font-bold text-right">{entry.quantity_before}</td>
+                      <td className={`px-4 py-3 font-black text-sm text-right ${change > 0 ? "text-emerald-700" : "text-rose-700"}`}>
                         {change > 0 ? `+${change}` : change} {entry.unit_of_measure}
                       </td>
-                      <td className="px-4 py-3 font-mono font-black text-zinc-950 text-sm text-right">
+                      <td className="px-4 py-3 font-black text-zinc-950 text-sm text-right">
                         {entry.quantity_after} {entry.unit_of_measure}
                       </td>
-                      <td className="px-4 py-3 text-zinc-500">{entry.performed_by_name || "System"}</td>
+                      <td className="px-4 py-3 text-zinc-800 font-bold">{entry.performed_by_name || "System"}</td>
                     </tr>
                   );
                 })

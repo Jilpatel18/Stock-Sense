@@ -97,17 +97,17 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-100">
       <div className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="text-center mb-6">
-          <div className="inline-flex w-12 h-12 rounded-2xl bg-black text-white items-center justify-center shadow-sm mb-3 font-extrabold">
+          <div className="inline-flex w-12 h-12 rounded-2xl bg-blue-600 text-white items-center justify-center shadow-md shadow-blue-500/20 mb-3 font-extrabold">
             {step === "email" && <KeyRound className="w-6 h-6 text-white" />}
             {step === "otp" && <ShieldCheck className="w-6 h-6 text-white" />}
             {step === "password" && <Lock className="w-6 h-6 text-white" />}
           </div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight">
             {step === "email" && "Reset Password"}
             {step === "otp" && "Verify OTP Code"}
             {step === "password" && "Set New Password"}
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             {step === "email" && "Enter your email to receive a secure 6-digit OTP code."}
             {step === "otp" && `Enter the OTP code sent for ${email}.`}
             {step === "password" && "Enter a new secure password for your account."}
@@ -130,20 +130,20 @@ export default function ForgotPasswordPage() {
         {step === "email" && (
           <form onSubmit={handleRequestOtp} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Account Email</label>
+              <label className="block text-xs font-bold text-zinc-800 mb-1">Account Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="manager@stocksense.com"
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors font-medium"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-black hover:bg-zinc-800 text-white font-extrabold text-sm rounded-xl transition-all shadow-sm disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Generating OTP..." : "Send Verification OTP"}
             </button>
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
         {step === "otp" && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">Enter 6-Digit OTP</label>
+              <label className="block text-xs font-bold text-zinc-800 mb-1">Enter 6-Digit OTP</label>
               <input
                 type="text"
                 required
@@ -161,9 +161,9 @@ export default function ForgotPasswordPage() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.trim())}
                 placeholder="6-Digit Code"
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 tracking-widest placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors font-mono font-bold text-center text-lg"
+                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 tracking-widest placeholder-zinc-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors font-mono font-bold text-center text-lg"
               />
-              <p className="text-[10px] text-zinc-500 mt-1.5 text-center">
+              <p className="text-[10px] text-zinc-500 mt-1.5 text-center font-medium">
                 Check your server terminal log for the OTP code in local development.
               </p>
             </div>
@@ -171,7 +171,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-black hover:bg-zinc-800 text-white font-extrabold text-sm rounded-xl transition-all shadow-sm disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Verifying..." : "Verify OTP Code"}
             </button>
@@ -181,7 +181,7 @@ export default function ForgotPasswordPage() {
         {step === "password" && (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 mb-1">New Password</label>
+              <label className="block text-xs font-bold text-zinc-800 mb-1">New Password</label>
               <input
                 type="password"
                 required
@@ -189,14 +189,14 @@ export default function ForgotPasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-sm text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors font-medium"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-black hover:bg-zinc-800 text-white font-extrabold text-sm rounded-xl transition-all shadow-sm disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Resetting..." : "Set New Password & Complete"}
             </button>

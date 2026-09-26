@@ -206,16 +206,16 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black text-zinc-950 tracking-tight flex items-center gap-2">
-            <Settings className="w-6 h-6 text-black" /> Administrative System Settings
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
+            <Settings className="w-6 h-6 text-blue-600" /> Administrative System Settings
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Configure warehouses, locations, product categories, suppliers, and system defaults.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-black text-white text-xs font-extrabold rounded-full flex items-center gap-1.5">
+          <span className="px-3.5 py-1.5 bg-blue-600 text-white text-xs font-extrabold rounded-full flex items-center gap-1.5 shadow-xs shadow-blue-500/20">
             <Shield className="w-3.5 h-3.5" />
             {isManager ? "Inventory Manager Access" : "Read-Only View"}
           </span>
@@ -242,8 +242,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("warehouses")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "warehouses"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <Warehouse className="w-4 h-4" /> Warehouses
@@ -253,8 +253,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("locations")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "locations"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <MapPin className="w-4 h-4" /> Locations
@@ -264,8 +264,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("categories")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "categories"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <Tag className="w-4 h-4" /> Categories
@@ -275,8 +275,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("suppliers")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "suppliers"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <Truck className="w-4 h-4" /> Suppliers
@@ -286,8 +286,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("reorder")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "reorder"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <Sliders className="w-4 h-4" /> Reorder Config
@@ -297,8 +297,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("system")}
           className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl transition-all ${
             activeTab === "system"
-              ? "bg-black text-white"
-              : "text-zinc-600 hover:bg-zinc-100 hover:text-black"
+              ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20"
+              : "text-zinc-700 hover:bg-zinc-100 hover:text-black font-semibold"
           }`}
         >
           <Info className="w-4 h-4" /> System Info
@@ -315,7 +315,7 @@ export default function SettingsPage() {
             {isManager && (
               <button
                 onClick={() => handleOpenCreate("warehouse")}
-                className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Add Warehouse
               </button>
@@ -331,7 +331,7 @@ export default function SettingsPage() {
                 <div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-black text-white text-[10px] font-mono font-bold rounded">
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">
                         {wh.code}
                       </span>
                       <h3 className="font-bold text-zinc-950 text-sm">{wh.name}</h3>
@@ -396,7 +396,7 @@ export default function SettingsPage() {
             {isManager && (
               <button
                 onClick={() => handleOpenCreate("location")}
-                className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Add Location
               </button>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
             {isManager && (
               <button
                 onClick={() => handleOpenCreate("category")}
-                className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Add Category
               </button>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
             {isManager && (
               <button
                 onClick={() => handleOpenCreate("supplier")}
-                className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-xs shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Add Supplier
               </button>
@@ -843,7 +843,7 @@ export default function SettingsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-black hover:bg-zinc-800 text-white font-extrabold rounded-xl"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-xs shadow-blue-500/20 transition-all"
                 >
                   Save Entry
                 </button>

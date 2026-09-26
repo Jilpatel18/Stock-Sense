@@ -217,10 +217,10 @@ export default function ValidationPreviewModal({
         <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
           <div>
             <h3 className="text-base font-bold text-zinc-950 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-black" />
+              <Layers className="w-5 h-5 text-blue-600" />
               Operation Validation Preview
             </h3>
-            <p className="text-xs text-zinc-500 font-mono mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5 font-medium">
               Ref: <span className="font-bold text-zinc-900">{doc.reference}</span> ({doc.type})
             </p>
           </div>
@@ -236,11 +236,11 @@ export default function ValidationPreviewModal({
 
         {/* Error / Insufficient Stock Alert */}
         {hasInsufficientStock && (
-          <div className="p-3.5 rounded-xl bg-black text-white text-xs font-semibold flex items-center gap-2 border border-zinc-800 shadow-md">
+          <div className="p-3.5 rounded-xl bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 border border-rose-700 shadow-md">
             <AlertCircle className="w-4 h-4 text-white shrink-0" />
             <div>
               <p className="font-bold">Insufficient Stock Warning</p>
-              <p className="text-[11px] text-zinc-300 font-normal">
+              <p className="text-[11px] text-rose-100 font-normal">
                 One or more items exceed available location stock. Confirmation is disabled.
               </p>
             </div>
@@ -381,7 +381,7 @@ export default function ValidationPreviewModal({
             type="button"
             onClick={handleConfirmSubmit}
             disabled={submitting || hasInsufficientStock || loadingPreview}
-            className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 flex items-center gap-1.5"
           >
             {submitting ? (
               "Validating..."

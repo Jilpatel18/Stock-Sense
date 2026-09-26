@@ -136,10 +136,10 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
             Product Catalog & Stock Breakdown
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Manage products, reorder thresholds, and location-level inventory quantities
           </p>
         </div>
@@ -148,13 +148,13 @@ export default function ProductsPage() {
           <a
             href="/api/products/export"
             download
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-zinc-100 text-zinc-900 hover:bg-zinc-200 border border-zinc-300 shadow-xs transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-zinc-100 text-zinc-900 hover:bg-zinc-200 border border-zinc-300 shadow-2xs transition-all"
           >
             Export CSV
           </a>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-black text-white hover:bg-zinc-800 shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-xs shadow-blue-500/20 transition-all"
           >
             <Plus className="w-4 h-4" /> Add New Product
           </button>
@@ -171,7 +171,7 @@ export default function ProductsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search product name or SKU..."
-            className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 pl-9 pr-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400"
+            className="w-full bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 pl-9 pr-3 py-2 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder-zinc-400 font-medium"
           />
         </div>
 
@@ -180,7 +180,7 @@ export default function ProductsPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+            className="bg-zinc-50 border border-zinc-300 rounded-xl text-xs text-zinc-950 px-3 py-2 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 font-medium"
           >
             <option value="All">All Categories</option>
             {categories.map((c) => (
@@ -193,10 +193,10 @@ export default function ProductsPage() {
           {/* Low Stock Filter Button */}
           <button
             onClick={() => setLowStockOnly(!lowStockOnly)}
-            className={`px-3 py-2 text-xs font-medium rounded-xl border flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-2 text-xs font-semibold rounded-xl border flex items-center gap-1.5 transition-all ${
               lowStockOnly
-                ? "bg-black text-white font-bold border-black"
-                : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:text-black"
+                ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:text-zinc-950"
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -208,51 +208,63 @@ export default function ProductsPage() {
       {/* Product List Table */}
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-100 text-zinc-700 border-b border-zinc-200 font-bold text-[11px]">
+          <table className="w-full text-left text-xs table-auto">
+            <thead className="bg-zinc-100/90 text-zinc-900 border-b border-zinc-200 font-extrabold text-[11px] uppercase tracking-wider">
               <tr>
-                <th className="px-4 py-3">Product Name</th>
-                <th className="px-4 py-3">SKU</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Unit</th>
-                <th className="px-4 py-3">Reorder Level</th>
-                <th className="px-4 py-3">Total Stock</th>
-                <th className="px-4 py-3">Stock Alert</th>
-                <th className="px-4 py-3 text-right">Details & Locations</th>
+                <th className="px-2.5 py-2.5">Product Name</th>
+                <th className="px-2.5 py-2.5">SKU</th>
+                <th className="px-2.5 py-2.5">Category</th>
+                <th className="px-2 py-2.5 text-center">Unit</th>
+                <th className="px-2 py-2.5 text-center whitespace-nowrap">Reorder</th>
+                <th className="px-2.5 py-2.5 whitespace-nowrap">Total Stock</th>
+                <th className="px-2.5 py-2.5 whitespace-nowrap">Stock Alert</th>
+                <th className="px-2.5 py-2.5 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={8} className="px-3 py-8 text-center text-zinc-500 font-bold">
                     Loading products catalog...
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={8} className="px-3 py-8 text-center text-zinc-500 font-bold">
                     No products found matching your search.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-zinc-50 transition-colors">
-                    <td className="px-4 py-3 font-bold text-zinc-950">{p.name}</td>
-                    <td className="px-4 py-3 font-mono text-zinc-950 font-bold">{p.sku}</td>
-                    <td className="px-4 py-3 text-zinc-600">{p.category_name || "Uncategorized"}</td>
-                    <td className="px-4 py-3 uppercase text-[11px] font-mono text-zinc-500">{p.unit_of_measure}</td>
-                    <td className="px-4 py-3 font-mono text-zinc-700">{p.reorder_level}</td>
-                    <td className="px-4 py-3">
-                      {parseFloat(p.total_stock) === 0 ? (
-                        <span className="font-extrabold text-sm text-rose-600 font-mono">0</span>
-                      ) : p.is_low_stock ? (
-                        <span className="font-extrabold text-sm text-amber-600 font-mono">{p.total_stock}</span>
-                      ) : (
-                        <span className="font-extrabold text-sm text-zinc-950 font-mono">{p.total_stock}</span>
-                      )}{" "}
-                      <span className="text-[10px] text-zinc-500 font-mono">{p.unit_of_measure}</span>
+                  <tr key={p.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <td className="px-2.5 py-2 font-bold text-zinc-950 max-w-[150px] truncate" title={p.name}>
+                      {p.name}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2.5 py-2 font-bold text-zinc-800 text-[11px] max-w-[130px] truncate" title={p.sku}>
+                      {p.sku}
+                    </td>
+                    <td className="px-2.5 py-2 font-semibold text-zinc-900 max-w-[120px] truncate" title={p.category_name || "Uncategorized"}>
+                      {p.category_name || "Uncategorized"}
+                    </td>
+                    <td className="px-2 py-2 uppercase text-[11px] text-zinc-700 font-bold text-center whitespace-nowrap">
+                      {p.unit_of_measure}
+                    </td>
+                    <td className="px-2 py-2 text-zinc-900 font-extrabold text-center whitespace-nowrap">
+                      {p.reorder_level}
+                    </td>
+                    <td className="px-2.5 py-2 whitespace-nowrap">
+                      <div className="inline-flex items-baseline gap-1 font-sans">
+                        {parseFloat(p.total_stock) === 0 ? (
+                          <span className="font-extrabold text-sm text-rose-600">0</span>
+                        ) : p.is_low_stock ? (
+                          <span className="font-extrabold text-sm text-amber-600">{p.total_stock}</span>
+                        ) : (
+                          <span className="font-extrabold text-sm text-zinc-950">{p.total_stock}</span>
+                        )}
+                        <span className="text-[11px] text-zinc-700 font-bold">{p.unit_of_measure}</span>
+                      </div>
+                    </td>
+                    <td className="px-2.5 py-2 whitespace-nowrap">
                       {parseFloat(p.total_stock) === 0 ? (
                         <StatusBadge status="Out of Stock" size="sm" />
                       ) : p.is_low_stock ? (
@@ -261,19 +273,24 @@ export default function ProductsPage() {
                         <StatusBadge status="Healthy" size="sm" />
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right space-x-2">
-                      <button
-                        onClick={() => setSelectedProduct(p)}
-                        className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300 transition-colors"
-                      >
-                        Location Break-down
-                      </button>
-                      <Link
-                        href={`/products/${p.id}`}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-black text-white hover:bg-zinc-800 transition-colors inline-flex items-center gap-1 shadow-sm"
-                      >
-                        Ledger History <ChevronRight className="w-3 h-3" />
-                      </Link>
+                    <td className="px-2.5 py-2 text-right">
+                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => setSelectedProduct(p)}
+                          title="View Location Breakdown"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-300 transition-colors"
+                        >
+                          <Building2 className="w-3 h-3 text-zinc-600" />
+                          Locations
+                        </button>
+                        <Link
+                          href={`/products/${p.id}`}
+                          title="View Ledger History"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xs shadow-blue-500/20"
+                        >
+                          Ledger <ChevronRight className="w-3 h-3 text-white" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -486,7 +503,7 @@ export default function ProductsPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-black text-white font-extrabold hover:bg-zinc-800 text-xs rounded-xl shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs shadow-blue-500/20 disabled:opacity-50 transition-all"
                 >
                   {submitting ? "Saving..." : "Create Product"}
                 </button>

@@ -75,6 +75,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUser = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
@@ -268,13 +269,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           <Link href="/dashboard" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Boxes className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-extrabold text-lg text-black tracking-tight flex items-center gap-1.5">
-                Stock<span className="text-zinc-600 font-semibold">Sense</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-800 border border-zinc-300">
+              <span className="font-bold text-lg text-zinc-950 tracking-tight flex items-center gap-1.5">
+                Stock<span className="text-blue-600 font-bold">Sense</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                   IMS
                 </span>
               </span>
@@ -295,7 +296,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 if (searchQuery.trim().length >= 2) setShowSearchDropdown(true);
               }}
               placeholder="Search inventory (Product, SKU, Warehouse)..."
-              className="w-full bg-zinc-50/90 border border-zinc-200/90 rounded-xl text-xs text-zinc-950 pl-8.5 pr-12 py-1.5 focus:outline-none focus:border-black focus:ring-1 focus:ring-black placeholder-zinc-400 font-medium transition-colors"
+              className="w-full bg-zinc-50/90 border border-zinc-200/90 rounded-xl text-xs text-zinc-950 pl-8.5 pr-12 py-1.5 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 placeholder-zinc-400 font-medium transition-colors"
             />
             {searchLoading ? (
               <span className="absolute right-3 text-[10px] text-zinc-400 font-mono animate-pulse">
@@ -456,7 +457,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 aria-label={`Open account menu for ${user.name || user.email}`}
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shadow-sm shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs uppercase shadow-xs shrink-0">
                   {getInitials(user.name, user.email)}
                 </div>
                 <span className="font-bold text-xs text-zinc-950 max-w-[130px] sm:max-w-[170px] truncate hidden sm:inline-block">
@@ -472,14 +473,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {/* User Dropdown Menu Popover */}
               {showUserDropdown && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-200 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100 mb-1">
+                  <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 mb-1">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-black text-white font-black flex items-center justify-center text-xs uppercase shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs uppercase shrink-0">
                         {getInitials(user.name, user.email)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-xs text-zinc-950 truncate">{user.name || user.email}</p>
-                        <p className="text-[10px] text-zinc-500 font-mono font-medium truncate mt-0.5">
+                        <p className="text-[10px] text-blue-700 font-mono font-medium truncate mt-0.5">
                           {formatRole(user.role)}
                         </p>
                       </div>
@@ -490,7 +491,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Link
                       href="/profile"
                       onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors"
                     >
                       <User className="w-4 h-4 text-zinc-500" />
                       <span>Profile</span>
@@ -498,7 +499,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Link
                       href="/settings"
                       onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-700 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors"
                     >
                       <Settings className="w-4 h-4 text-zinc-500" />
                       <span>Settings</span>
@@ -511,7 +512,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         setShowUserDropdown(false);
                         handleLogout();
                       }}
-                      className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 text-red-600" />
                       <span>Logout</span>
@@ -523,7 +524,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           ) : (
             <Link
               href="/login"
-              className="px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-black text-white hover:bg-zinc-800 transition-colors shadow-sm"
+              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs"
             >
               Log In
             </Link>
@@ -532,7 +533,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {seedNotification && (
-        <div className="bg-black border-b border-zinc-800 text-white px-4 py-2 text-center text-xs font-bold animate-in fade-in">
+        <div className="bg-blue-600 border-b border-blue-700 text-white px-4 py-2 text-center text-xs font-bold animate-in fade-in">
           {seedNotification}
         </div>
       )}
@@ -540,14 +541,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Desktop */}
         <aside
-          className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-zinc-50/80 border-r border-zinc-200 flex flex-col transition-transform duration-200 ${
+          className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-50/80 border-r border-zinc-200 flex flex-col transition-transform duration-200 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
           <div className="p-4 flex-1 overflow-y-auto space-y-6">
             {/* OVERVIEW Nav */}
             <div>
-              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
                 Overview
               </p>
               <nav className="space-y-1">
@@ -558,10 +559,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-xs"
-                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                          ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-500/20"
+                          : "text-zinc-600 hover:text-blue-600 hover:bg-blue-50/60"
                       }`}
                     >
                       <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
@@ -574,7 +575,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* CATALOG Nav */}
             <div>
-              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
                 Catalog
               </p>
               <nav className="space-y-1">
@@ -585,10 +586,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-xs"
-                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                          ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-500/20"
+                          : "text-zinc-600 hover:text-blue-600 hover:bg-blue-50/60"
                       }`}
                     >
                       <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
@@ -603,7 +604,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div>
               <div
                 onClick={() => setOperationsOpen(!operationsOpen)}
-                className="px-3 flex items-center justify-between text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5 cursor-pointer hover:text-black"
+                className="px-3 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 cursor-pointer hover:text-zinc-900"
               >
                 <span>Operations</span>
                 <ChevronDown
@@ -619,10 +620,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                        className={`flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                           isActive
-                            ? "bg-black text-white font-extrabold shadow-xs"
-                            : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                            ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-500/20"
+                            : "text-zinc-600 hover:text-blue-600 hover:bg-blue-50/60"
                         }`}
                       >
                         <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
@@ -636,7 +637,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* LOCATION Nav */}
             <div>
-              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
                 Location
               </p>
               <nav className="space-y-1">
@@ -647,10 +648,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-xs"
-                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                          ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-500/20"
+                          : "text-zinc-600 hover:text-blue-600 hover:bg-blue-50/60"
                       }`}
                     >
                       <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />
@@ -663,7 +664,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* SYSTEM Nav */}
             <div>
-              <p className="px-3 text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-1.5">
+              <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
                 System
               </p>
               <nav className="space-y-1">
@@ -674,10 +675,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                         isActive
-                          ? "bg-black text-white font-extrabold shadow-xs"
-                          : "text-zinc-600 hover:text-black hover:bg-zinc-200/70"
+                          ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-500/20"
+                          : "text-zinc-600 hover:text-blue-600 hover:bg-blue-50/60"
                       }`}
                     >
                       <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`} />

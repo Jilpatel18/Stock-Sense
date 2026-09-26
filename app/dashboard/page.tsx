@@ -142,10 +142,10 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-black text-blue-600 tracking-tight flex items-center gap-2">
             Operations & Executive Dashboard
           </h1>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-zinc-600 mt-1 font-medium">
             Real-time multi-warehouse stock health, ledger movements & operational controls
           </p>
         </div>
@@ -154,25 +154,25 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/operations/receipts?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Receipt
           </Link>
           <Link
             href="/operations/deliveries?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Delivery
           </Link>
           <Link
             href="/operations/transfers?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Transfer
           </Link>
           <Link
             href="/operations/adjustments?new=true"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/10 transition-all"
           >
             <Plus className="w-3.5 h-3.5" /> Adjustment
           </Link>
@@ -180,12 +180,12 @@ export default function DashboardPage() {
       </div>
 
       {actionMessage && (
-        <div className="p-3.5 rounded-xl bg-black text-white text-xs font-medium flex items-center justify-between shadow-md animate-in fade-in">
+        <div className="p-3.5 rounded-xl bg-blue-600 text-white text-xs font-medium flex items-center justify-between shadow-md shadow-blue-500/20 animate-in fade-in">
           <span className="flex items-center gap-2 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-white" />
             {actionMessage}
           </span>
-          <span className="text-[10px] text-zinc-300 font-mono">Ledger Updated</span>
+          <span className="text-[10px] text-blue-100 font-semibold">Ledger Updated</span>
         </div>
       )}
 
@@ -369,7 +369,7 @@ export default function DashboardPage() {
             <div className="w-full bg-zinc-100 rounded-xl h-5 overflow-hidden flex border border-zinc-200 p-0.5">
               <div
                 style={{ width: `${health.healthyPercent}%` }}
-                className="bg-black h-full rounded-l-lg transition-all duration-500"
+                className="bg-blue-600 h-full rounded-l-lg transition-all duration-500"
                 title={`Healthy: ${health.healthyPercent}%`}
               />
               <div
@@ -388,25 +388,25 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
                 <span className="text-[10px] text-zinc-500 uppercase font-bold block">Healthy</span>
-                <span className="text-xl font-extrabold text-zinc-950">{health.healthyPercent}%</span>
-                <span className="text-[10px] text-zinc-400 block font-mono">({health.healthyCount} SKUs)</span>
+                <span className="text-xl font-extrabold text-blue-600">{health.healthyPercent}%</span>
+                <span className="text-[10px] text-zinc-500 block font-medium">({health.healthyCount} SKUs)</span>
               </div>
               <div className="p-3 bg-amber-50/40 border border-amber-200/80 rounded-xl">
                 <span className="text-[10px] text-amber-800 uppercase font-bold block">Low Stock</span>
                 <span className="text-xl font-extrabold text-amber-900">{health.lowStockPercent}%</span>
-                <span className="text-[10px] text-amber-700/80 block font-mono">({health.lowStockCount} SKUs)</span>
+                <span className="text-[10px] text-amber-700/80 block font-medium">({health.lowStockCount} SKUs)</span>
               </div>
               <div className="p-3 bg-rose-50/40 border border-rose-200/80 rounded-xl">
                 <span className="text-[10px] text-rose-700 uppercase font-bold block">Out of Stock</span>
                 <span className="text-xl font-extrabold text-rose-800">{health.outOfStockPercent}%</span>
-                <span className="text-[10px] text-rose-600/80 block font-mono">({health.outOfStockCount} SKUs)</span>
+                <span className="text-[10px] text-rose-600/80 block font-medium">({health.outOfStockCount} SKUs)</span>
               </div>
             </div>
 
             {/* Quick Status Summary Row */}
             <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-600">
               <span className="font-medium">Master SKU Tracking Status</span>
-              <span className="font-mono font-bold text-zinc-900">
+              <span className="font-bold text-zinc-900">
                 {health.healthyCount} / {kpis.totalSkus || 1} Operational
               </span>
             </div>
@@ -417,10 +417,10 @@ export default function DashboardPage() {
         <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
             <h2 className="text-xs font-bold text-zinc-950 uppercase tracking-wider flex items-center gap-2">
-              <Warehouse className="w-4 h-4 text-black" />
+              <Warehouse className="w-4 h-4 text-blue-600" />
               Stock Distribution by Warehouse
             </h2>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase">Live Location Sum</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase">Live Location Sum</span>
           </div>
 
           <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
@@ -435,15 +435,15 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-center text-xs">
                       <div>
                         <span className="font-bold text-zinc-950">{wh.name}</span>
-                        <span className="font-mono text-[10px] text-zinc-500 ml-1.5">({wh.code})</span>
+                        <span className="text-[10px] text-zinc-500 ml-1.5 font-semibold">({wh.code})</span>
                       </div>
-                      <span className="font-mono font-extrabold text-zinc-950">
+                      <span className="font-extrabold text-zinc-950">
                         {totalInv.toLocaleString()} <span className="text-[10px] text-zinc-500 font-normal">units</span>
                       </span>
                     </div>
                     {/* Visual Bar */}
                     <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-black h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
+                      <div className="bg-blue-600 h-full rounded-full transition-all duration-500" style={{ width: `${percentOfTotal}%` }} />
                     </div>
                   </div>
                 );
@@ -468,7 +468,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setMovementDays("7")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                movementDays === "7" ? "bg-black text-white shadow-xs" : "text-zinc-600 hover:text-zinc-950"
+                movementDays === "7" ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
               }`}
             >
               Last 7 Days
@@ -476,7 +476,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setMovementDays("30")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                movementDays === "30" ? "bg-black text-white shadow-xs" : "text-zinc-600 hover:text-zinc-950"
+                movementDays === "30" ? "bg-blue-600 text-white shadow-xs shadow-blue-500/20" : "text-zinc-700 hover:text-zinc-950 font-semibold"
               }`}
             >
               Last 30 Days
@@ -490,8 +490,8 @@ export default function DashboardPage() {
               <span>Receipts Received</span>
               <ArrowDownRight className="w-4 h-4 text-zinc-900" />
             </div>
-            <p className="text-xl font-extrabold text-zinc-950 font-mono">+{movementData.receipts}</p>
-            <p className="text-[10px] text-zinc-500 font-mono">Incoming stock posted</p>
+            <p className="text-xl font-extrabold text-zinc-950">+{movementData.receipts}</p>
+            <p className="text-[10px] text-zinc-600 font-medium">Incoming stock posted</p>
           </div>
 
           <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
@@ -499,8 +499,8 @@ export default function DashboardPage() {
               <span>Deliveries Shipped</span>
               <ArrowUpRight className="w-4 h-4 text-zinc-900" />
             </div>
-            <p className="text-xl font-extrabold text-zinc-950 font-mono">-{movementData.deliveries}</p>
-            <p className="text-[10px] text-zinc-500 font-mono">Outgoing stock fulfilled</p>
+            <p className="text-xl font-extrabold text-zinc-950">-{movementData.deliveries}</p>
+            <p className="text-[10px] text-zinc-600 font-medium">Outgoing stock fulfilled</p>
           </div>
 
           <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
@@ -508,8 +508,8 @@ export default function DashboardPage() {
               <span>Transfers Relocated</span>
               <ArrowLeftRight className="w-4 h-4 text-zinc-900" />
             </div>
-            <p className="text-xl font-extrabold text-zinc-950 font-mono">±{movementData.transfers}</p>
-            <p className="text-[10px] text-zinc-500 font-mono">Inter-warehouse volume</p>
+            <p className="text-xl font-extrabold text-zinc-950">±{movementData.transfers}</p>
+            <p className="text-[10px] text-zinc-600 font-medium">Inter-warehouse volume</p>
           </div>
 
           <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
@@ -517,8 +517,8 @@ export default function DashboardPage() {
               <span>Adjustments Net</span>
               <SlidersHorizontal className="w-4 h-4 text-zinc-900" />
             </div>
-            <p className="text-xl font-extrabold text-zinc-950 font-mono">±{movementData.adjustments}</p>
-            <p className="text-[10px] text-zinc-500 font-mono">Physical count variance</p>
+            <p className="text-xl font-extrabold text-zinc-950">±{movementData.adjustments}</p>
+            <p className="text-[10px] text-zinc-600 font-medium">Physical count variance</p>
           </div>
         </div>
       </div>
@@ -560,28 +560,18 @@ export default function DashboardPage() {
                   stats?.allProductsStock?.slice(0, 8).map((prod: any) => (
                     <tr key={prod.id} className="hover:bg-zinc-50 transition-colors">
                       <td className="px-3 py-2.5 font-bold text-zinc-950">{prod.name}</td>
-                      <td className="px-3 py-2.5 font-mono text-[11px] text-zinc-600">{prod.sku}</td>
-                      <td className="px-3 py-2.5 text-[11px] text-zinc-600">
+                      <td className="px-3 py-2.5 text-[11px] font-bold text-zinc-700">{prod.sku}</td>
+                      <td className="px-3 py-2.5 text-[11px] text-zinc-700 font-medium">
                         {prod.warehouse_names || "Main Hub"} ({prod.location_names || "Default"})
                       </td>
-                      <td className="px-3 py-2.5 font-mono font-extrabold text-zinc-950">
+                      <td className="px-3 py-2.5 font-extrabold text-zinc-950 whitespace-nowrap">
                         {prod.current_stock} {prod.unit_of_measure}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-zinc-600">
+                      <td className="px-3 py-2.5 font-bold text-zinc-700 whitespace-nowrap">
                         {prod.reorder_level} {prod.unit_of_measure}
                       </td>
-                      <td className="px-3 py-2.5">
-                        <span
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border uppercase tracking-wider ${
-                            prod.status === "OUT OF STOCK"
-                              ? "bg-black text-white border-black"
-                              : prod.status === "LOW STOCK"
-                              ? "bg-zinc-200 text-zinc-950 border-zinc-400"
-                              : "bg-zinc-100 text-zinc-800 border-zinc-300"
-                          }`}
-                        >
-                          {prod.status}
-                        </span>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <StatusBadge status={prod.status} size="sm" />
                       </td>
                     </tr>
                   ))
@@ -598,28 +588,28 @@ export default function DashboardPage() {
               <History className="w-4 h-4 text-black" />
               Recent Activity Feed
             </h2>
-            <Link href="/operations/history" className="text-xs text-zinc-700 hover:text-black font-semibold underline">
+            <Link href="/operations/history" className="text-xs text-blue-600 hover:text-blue-700 font-extrabold underline">
               Full Ledger
             </Link>
           </div>
 
           <div className="space-y-3">
             {stats?.recentActivity?.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-4 text-center">No recent activity recorded.</p>
+              <p className="text-xs text-zinc-500 py-4 text-center font-medium">No recent activity recorded.</p>
             ) : (
               stats?.recentActivity?.map((act: any) => {
                 const change = parseFloat(act.quantity_change);
                 return (
                   <div key={act.id} className="p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-zinc-950">{act.product_name}</span>
-                      <span className="font-mono text-[10px] font-bold text-zinc-900">
+                      <span className="font-extrabold text-zinc-950">{act.product_name}</span>
+                      <span className="text-xs font-black text-zinc-950">
                         {change > 0 ? `+${change}` : change}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-600 font-semibold">
                       <span>{act.user_name || "System User"}</span>
-                      <span className="font-mono">{new Date(act.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      <span>{new Date(act.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   </div>
                 );
@@ -767,7 +757,7 @@ export default function DashboardPage() {
                       {doc.status !== "Done" && doc.status !== "Canceled" ? (
                         <button
                           onClick={() => handleOpenValidationModal(doc)}
-                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-black hover:bg-zinc-800 text-white shadow-sm transition-all"
+                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all"
                         >
                           Validate & Post
                         </button>
