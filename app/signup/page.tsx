@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Boxes, UserCheck, Shield } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function SignupPage() {
+  const toast = useToast();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,12 +30,17 @@ export default function SignupPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success("Account created successfully! Redirecting...");
         router.push("/dashboard");
       } else {
-        setError(data.error || "Signup failed");
+        const errMsg = data.error || "Signup failed";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError("An error occurred during signup.");
+      const errMsg = "An error occurred during signup.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

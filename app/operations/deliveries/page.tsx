@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import ValidationPreviewModal from "@/components/ValidationPreviewModal";
+import { toast } from "@/context/ToastContext";
 import {
   ArrowUpRight,
   Plus,
@@ -85,15 +86,17 @@ function DeliveriesContent() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success(`Delivery #${data.delivery?.delivery_number || "Draft"} created successfully!`);
         setShowModal(false);
         setCustomerName("");
         setItems([{ product_id: "", quantity: "1" }]);
         fetchData();
       } else {
-        alert("Error: " + (data.error || "Failed to create delivery order"));
+        const errorMsg = data.error || "Failed to create delivery order";
+        toast.error("Error: " + errorMsg);
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -117,9 +120,12 @@ function DeliveriesContent() {
     const res = await fetch(`/api/operations/deliveries/${previewDoc.id}/validate`, { method: "POST" });
     const data = await res.json();
     if (res.ok && data.success) {
+      toast.success(`Delivery Order ${previewDoc.reference} validated & stock updated!`);
       fetchData();
     } else {
-      throw new Error(data.error || "Failed to validate delivery order");
+      const errorMsg = data.error || "Failed to validate delivery order";
+      toast.error("Validation Error: " + errorMsg);
+      throw new Error(errorMsg);
     }
   };
 

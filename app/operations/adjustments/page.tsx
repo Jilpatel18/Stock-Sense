@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import ValidationPreviewModal from "@/components/ValidationPreviewModal";
+import { toast } from "@/context/ToastContext";
 import {
   SlidersHorizontal,
   Plus,
@@ -84,16 +85,18 @@ function AdjustmentsContent() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success(`Adjustment #${data.adjustment?.adjustment_number || "Draft"} created successfully!`);
         setShowModal(false);
         setReason("");
         setLocationId("");
         setItems([{ product_id: "", counted_quantity: "0" }]);
         fetchData();
       } else {
-        alert("Error: " + (data.error || "Failed to create inventory adjustment"));
+        const errorMsg = data.error || "Failed to create inventory adjustment";
+        toast.error("Error: " + errorMsg);
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -116,9 +119,12 @@ function AdjustmentsContent() {
     const res = await fetch(`/api/operations/adjustments/${previewDoc.id}/validate`, { method: "POST" });
     const data = await res.json();
     if (res.ok && data.success) {
+      toast.success(`Stock Adjustment ${previewDoc.reference} validated & posted!`);
       fetchData();
     } else {
-      throw new Error(data.error || "Failed to validate adjustment");
+      const errorMsg = data.error || "Failed to validate adjustment";
+      toast.error("Validation Error: " + errorMsg);
+      throw new Error(errorMsg);
     }
   };
 

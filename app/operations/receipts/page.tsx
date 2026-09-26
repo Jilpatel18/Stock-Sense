@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import ValidationPreviewModal from "@/components/ValidationPreviewModal";
+import { toast } from "@/context/ToastContext";
 import {
   ArrowDownRight,
   Plus,
@@ -87,15 +88,17 @@ function ReceiptsContent() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success(`Receipt #${data.receipt?.receipt_number || "Draft"} created successfully!`);
         setShowModal(false);
         setSupplierId("");
         setItems([{ product_id: "", quantity: "1" }]);
         fetchData();
       } else {
-        alert("Error: " + (data.error || "Failed to create receipt"));
+        const errorMsg = data.error || "Failed to create receipt";
+        toast.error("Error: " + errorMsg);
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -119,9 +122,12 @@ function ReceiptsContent() {
     const res = await fetch(`/api/operations/receipts/${previewDoc.id}/validate`, { method: "POST" });
     const data = await res.json();
     if (res.ok && data.success) {
+      toast.success(`Receipt ${previewDoc.reference} validated & posted to stock ledger!`);
       fetchData();
     } else {
-      throw new Error(data.error || "Failed to validate receipt");
+      const errorMsg = data.error || "Failed to validate receipt";
+      toast.error("Validation Error: " + errorMsg);
+      throw new Error(errorMsg);
     }
   };
 

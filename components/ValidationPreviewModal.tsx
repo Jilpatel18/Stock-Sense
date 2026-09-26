@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import StatusTimeline from "./StatusTimeline";
 import { AlertCircle, CheckCircle2, X, ArrowRight, Layers } from "lucide-react";
+import { toast } from "@/context/ToastContext";
 
 interface ValidationPreviewModalProps {
   isOpen: boolean;
@@ -200,9 +201,12 @@ export default function ValidationPreviewModal({
     setErrorMessage(null);
     try {
       await onConfirm();
+      toast.success(`${doc.type || "Operation"} #${doc.reference || doc.id} validated successfully!`);
       onClose();
     } catch (err: any) {
-      setErrorMessage(err.message || "Validation failed.");
+      const msg = err.message || "Validation failed.";
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

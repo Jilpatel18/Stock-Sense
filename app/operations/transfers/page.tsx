@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import ValidationPreviewModal from "@/components/ValidationPreviewModal";
+import { toast } from "@/context/ToastContext";
 import {
   ArrowLeftRight,
   Plus,
@@ -85,16 +86,18 @@ function TransfersContent() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success(`Transfer #${data.transfer?.transfer_number || "Draft"} created successfully!`);
         setShowModal(false);
         setSourceLocationId("");
         setDestinationLocationId("");
         setItems([{ product_id: "", quantity: "1" }]);
         fetchData();
       } else {
-        alert("Error: " + (data.error || "Failed to create internal transfer"));
+        const errorMsg = data.error || "Failed to create internal transfer";
+        toast.error("Error: " + errorMsg);
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -120,9 +123,12 @@ function TransfersContent() {
     const res = await fetch(`/api/operations/transfers/${previewDoc.id}/validate`, { method: "POST" });
     const data = await res.json();
     if (res.ok && data.success) {
+      toast.success(`Stock Transfer ${previewDoc.reference} validated & completed!`);
       fetchData();
     } else {
-      throw new Error(data.error || "Failed to validate transfer");
+      const errorMsg = data.error || "Failed to validate transfer";
+      toast.error("Validation Error: " + errorMsg);
+      throw new Error(errorMsg);
     }
   };
 

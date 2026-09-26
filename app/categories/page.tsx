@@ -15,6 +15,7 @@ import {
   Package,
   ArrowRight,
 } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 interface Category {
   id: number;
@@ -27,6 +28,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const toast = useToast();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -95,6 +97,7 @@ export default function CategoriesPage() {
     e.preventDefault();
     if (!formData.name.trim() || !formData.code.trim()) {
       setError("Category Name and Code are required.");
+      toast.warning("Category Name and Code are required.");
       return;
     }
 
@@ -114,14 +117,20 @@ export default function CategoriesPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(`Category ${editItem ? "updated" : "created"} successfully!`);
+        const msg = `Category "${formData.name}" ${editItem ? "updated" : "created"} successfully!`;
+        setMessage(msg);
+        toast.success(msg);
         setShowModal(false);
         await loadCategories();
       } else {
-        setError(data.error || "Failed to save category.");
+        const errStr = data.error || "Failed to save category.";
+        setError(errStr);
+        toast.error(errStr);
       }
     } catch (err) {
-      setError("An unexpected error occurred while saving.");
+      const errStr = "An unexpected error occurred while saving.";
+      setError(errStr);
+      toast.error(errStr);
     } finally {
       setSubmitting(false);
     }
@@ -136,13 +145,19 @@ export default function CategoriesPage() {
       const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(data.message || "Category removed successfully.");
+        const msg = data.message || "Category removed successfully.";
+        setMessage(msg);
+        toast.success(msg);
         await loadCategories();
       } else {
-        setError(data.error || "Failed to delete category.");
+        const errStr = data.error || "Failed to delete category.";
+        setError(errStr);
+        toast.error(errStr);
       }
     } catch (err) {
-      setError("An error occurred during deletion.");
+      const errStr = "An error occurred during deletion.";
+      setError(errStr);
+      toast.error(errStr);
     }
   };
 

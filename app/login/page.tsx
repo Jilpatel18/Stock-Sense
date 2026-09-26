@@ -4,6 +4,7 @@ import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Boxes, ShieldCheck, ArrowRight } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export function getSafeRedirect(target: string | null): string {
   if (!target) return "/dashboard";
@@ -14,6 +15,7 @@ export function getSafeRedirect(target: string | null): string {
 }
 
 function LoginForm() {
+  const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
@@ -39,13 +41,18 @@ function LoginForm() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success("Login successful! Redirecting...");
         window.location.href = destination;
       } else {
-        setError(data.error || "Login failed");
+        const errMsg = data.error || "Login failed";
+        setError(errMsg);
+        toast.error(errMsg);
         setLoading(false);
       }
     } catch (err: any) {
-      setError("An error occurred during login.");
+      const errMsg = "An error occurred during login.";
+      setError(errMsg);
+      toast.error(errMsg);
       setLoading(false);
     }
   };
@@ -74,13 +81,18 @@ function LoginForm() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success("Demo login successful! Redirecting...");
         window.location.href = destination;
       } else {
-        setError(data.error || "Demo login failed");
+        const errMsg = data.error || "Demo login failed";
+        setError(errMsg);
+        toast.error(errMsg);
         setLoading(false);
       }
     } catch (err: any) {
-      setError("Error executing demo login");
+      const errMsg = "Error executing demo login";
+      setError(errMsg);
+      toast.error(errMsg);
       setLoading(false);
     }
   };

@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 
 import { getInitials, formatRole } from "@/components/AppLayout";
+import { useToast } from "@/context/ToastContext";
 
 export default function ProfilePage() {
+  const toast = useToast();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -58,6 +60,7 @@ export default function ProfilePage() {
     } catch (err) {
       console.error(err);
     } finally {
+      toast.info("Logged out successfully");
       router.push("/login");
       router.refresh();
     }
@@ -69,12 +72,16 @@ export default function ProfilePage() {
     setMessage(null);
 
     if (newPassword && newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      const errMsg = "New passwords do not match.";
+      setError(errMsg);
+      toast.error(errMsg);
       return;
     }
 
     if (newPassword && !currentPassword) {
-      setError("Please enter your current password to change password.");
+      const errMsg = "Please enter your current password to change password.";
+      setError(errMsg);
+      toast.error(errMsg);
       return;
     }
 
@@ -92,16 +99,22 @@ export default function ProfilePage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(data.message || "Profile updated successfully!");
+        const msg = data.message || "Profile updated successfully!";
+        setMessage(msg);
+        toast.success(msg);
         setUser(data.user);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setError(data.error || "Failed to update profile");
+        const errMsg = data.error || "Failed to update profile";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError("An unexpected error occurred.");
+      const errMsg = "An unexpected error occurred.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSaving(false);
     }

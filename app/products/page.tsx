@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
+import { toast } from "@/context/ToastContext";
 import {
   Package,
   Plus,
@@ -94,7 +95,7 @@ export default function ProductsPage() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (initialStock && parseFloat(initialStock) > 0 && !initialLocation) {
-      alert("Please select a Stock Location for the initial stock.");
+      toast.warning("Please select a Stock Location for the initial stock.");
       return;
     }
     setSubmitting(true);
@@ -115,6 +116,7 @@ export default function ProductsPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success(`Product "${data.product?.name || newName}" created successfully!`);
         setShowAddModal(false);
         setNewName("");
         setNewSku("");
@@ -125,10 +127,11 @@ export default function ProductsPage() {
         setInitialLocation("");
         fetchProducts();
       } else {
-        alert("Error: " + (data.error || "Failed to create product"));
+        const errorMsg = data.error || "Failed to create product";
+        toast.error("Error: " + errorMsg);
       }
     } catch (err: any) {
-      alert("Error creating product: " + err.message);
+      toast.error("Error creating product: " + err.message);
     } finally {
       setSubmitting(false);
     }

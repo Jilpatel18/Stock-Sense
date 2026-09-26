@@ -18,8 +18,10 @@ import {
   Layers,
   RotateCcw,
 } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function SettingsPage() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<
     "warehouses" | "locations" | "categories" | "suppliers" | "reorder" | "system"
   >("warehouses");
@@ -130,14 +132,19 @@ export default function SettingsPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(`${modalType.toUpperCase()} saved successfully!`);
+        const msg = `${modalType.toUpperCase()} saved successfully!`;
+        setMessage(msg);
+        toast.success(msg);
         setShowModal(false);
         loadAllData();
       } else {
-        setError(data.error || "Action failed");
+        const errMsg = data.error || "Action failed";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
       setError("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
     }
   };
 
@@ -156,13 +163,18 @@ export default function SettingsPage() {
       const res = await fetch(url, { method: "DELETE" });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(data.message || `${type.toUpperCase()} removed.`);
+        const msg = data.message || `${type.toUpperCase()} removed.`;
+        setMessage(msg);
+        toast.success(msg);
         loadAllData();
       } else {
-        setError(data.error || "Delete failed");
+        const errMsg = data.error || "Delete failed";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err) {
       setError("Error executing delete.");
+      toast.error("Error executing delete.");
     }
   };
 
@@ -191,13 +203,18 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage(`${type.toUpperCase()} reactivated successfully.`);
+        const msg = `${type.toUpperCase()} reactivated successfully.`;
+        setMessage(msg);
+        toast.success(msg);
         loadAllData();
       } else {
-        setError(data.error || "Failed to reactivate");
+        const errMsg = data.error || "Failed to reactivate";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch {
       setError("Error reactivating item.");
+      toast.error("Error reactivating item.");
     }
   };
 

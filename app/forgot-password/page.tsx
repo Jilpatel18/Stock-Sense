@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { KeyRound, ArrowLeft, CheckCircle2, ShieldCheck, Lock } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function ForgotPasswordPage() {
+  const toast = useToast();
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -29,12 +31,17 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage(data.message);
+        toast.success(data.message || "Verification code sent to your email!");
         setStep("otp");
       } else {
-        setError(data.error || "Failed to send OTP");
+        const errMsg = data.error || "Failed to send OTP";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError("An error occurred while requesting OTP.");
+      const errMsg = "An error occurred while requesting OTP.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -56,12 +63,17 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage(data.message);
+        toast.success(data.message || "OTP verified successfully!");
         setStep("password");
       } else {
-        setError(data.error || "Invalid OTP");
+        const errMsg = data.error || "Invalid OTP";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError("An error occurred during OTP verification.");
+      const errMsg = "An error occurred during OTP verification.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -83,11 +95,16 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage(data.message);
+        toast.success(data.message || "Password reset successfully!");
       } else {
-        setError(data.error || "Password reset failed");
+        const errMsg = data.error || "Password reset failed";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError("An error occurred during password reset.");
+      const errMsg = "An error occurred during password reset.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

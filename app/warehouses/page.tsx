@@ -8,8 +8,10 @@ import {
   Building2,
   X,
 } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function WarehousesPage() {
+  const toast = useToast();
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,16 +63,17 @@ export default function WarehousesPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success("Warehouse created successfully!");
         setShowWhModal(false);
         setWhName("");
         setWhCode("");
         setWhAddress("");
         fetchWarehouses();
       } else {
-        alert("Error: " + (data.error || "Failed to create warehouse"));
+        toast.error(data.error || "Failed to create warehouse");
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error(err.message || "Failed to create warehouse");
     } finally {
       setSubmitting(false);
     }
@@ -94,15 +97,16 @@ export default function WarehousesPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        toast.success("Location created successfully!");
         setShowLocModal(false);
         setLocName("");
         setLocCode("");
         fetchWarehouses();
       } else {
-        alert("Error: " + (data.error || "Failed to create location"));
+        toast.error(data.error || "Failed to create location");
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error(err.message || "Failed to create location");
     } finally {
       setSubmitting(false);
     }

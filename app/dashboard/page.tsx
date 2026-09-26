@@ -23,8 +23,10 @@ import {
   TrendingUp,
   History,
 } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function DashboardPage() {
+  const toast = useToast();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -104,11 +106,15 @@ export default function DashboardPage() {
     const res = await fetch(endpoint, { method: "POST" });
     const data = await res.json();
     if (res.ok && data.success) {
-      setActionMessage(data.message || `Operation ${previewDoc.reference} validated successfully!`);
+      const msg = data.message || `Operation ${previewDoc.reference} validated successfully!`;
+      setActionMessage(msg);
+      toast.success(msg);
       setTimeout(() => setActionMessage(null), 4000);
       fetchStats();
     } else {
-      throw new Error(data.error || "Failed to validate document.");
+      const errMsg = data.error || "Failed to validate document.";
+      toast.error(errMsg);
+      throw new Error(errMsg);
     }
   };
 
